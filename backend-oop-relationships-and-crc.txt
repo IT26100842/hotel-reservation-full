@@ -1,0 +1,651 @@
+================================================================================
+HOTEL RESERVATION SYSTEM - BACKEND CLASS RELATIONSHIPS & CRC CARDS
+Package: com.wd32.Hotel_Reservation
+================================================================================
+
+================================================================================
+PART 1: CLASS RELATIONSHIPS (SEPARATED BY RELATIONSHIP TYPE)
+================================================================================
+
+--------------------------------------------------------------------------------
+1. INHERITANCE (Generalization / "IS-A" & Interface Realization)
+--------------------------------------------------------------------------------
+Definition: A subclass inherits attributes, methods, and contracts from an
+abstract superclass or interface.
+
+A) Model Layer Inheritance (extends BaseEntity):
+   - User       ──▷ BaseEntity   (User IS-A BaseEntity)
+   - Room       ──▷ BaseEntity   (Room IS-A BaseEntity)
+   - Booking    ──▷ BaseEntity   (Booking IS-A BaseEntity)
+   - Review     ──▷ BaseEntity   (Review IS-A BaseEntity)
+   - PromoCode  ──▷ BaseEntity   (PromoCode IS-A BaseEntity)
+   * Details: All 5 domain entities inherit 'id' (Long), 'createdAt' (LocalDateTime),
+     getters/setters, and override the abstract 'validate()' method from BaseEntity.
+
+B) Service Layer Inheritance (extends BaseService<T>):
+   - UserService       ──▷ BaseService<User>
+   - RoomService       ──▷ BaseService<Room>
+   - BookingService    ──▷ BaseService<Booking>
+   - ReviewService     ──▷ BaseService<Review>
+   - PromoCodeService  ──▷ BaseService<PromoCode>
+   * Details: All 5 services inherit generic CRUD operations ('getAll()',
+     'findById()', 'getById()', 'save()', 'delete()') from BaseService<T>.
+
+C) Controller Layer Inheritance (extends BaseController):
+   - AuthController    ──▷ BaseController
+   - RoomController    ──▷ BaseController
+   - BookingController ──▷ BaseController
+   - ReviewController  ──▷ BaseController
+   - PromoController   ──▷ BaseController
+   - AdminController   ──▷ BaseController
+   * Details: All 6 REST controllers inherit centralized exception handling
+     ('handleBadRequest()', 'handleServerError()') and ID parsing ('parseId()').
+
+D) Repository & Configuration Interface Inheritance / Realization:
+   - UserRepository      ──▷ JpaRepository<User, Long>
+   - RoomRepository      ──▷ JpaRepository<Room, Long>
+   - BookingRepository   ──▷ JpaRepository<Booking, Long>
+   - ReviewRepository    ──▷ JpaRepository<Review, Long>
+   - PromoCodeRepository ──▷ JpaRepository<PromoCode, Long>
+   - DataInitializer     ..▷ CommandLineRunner (implements run())
+   - WebConfig           ..▷ WebMvcConfigurer  (implements addCorsMappings())
+
+
+--------------------------------------------------------------------------------
+2. ASSOCIATION ("USES-A" / Structural Link Between Independent Domain Classes)
+--------------------------------------------------------------------------------
+Definition: A structural relationship where objects of one class are connected
+to objects of another class, and both have independent lifecycles.
+
+   - Booking (Many) ──────> (1) Room
+     * Type: Unidirectional Many-to-One Association (@ManyToOne)
+     * Details: 'Booking' holds a reference 'private Room room' (foreign key
+       'room_id'). Multiple bookings can reference the same Room category, and
+       the Room exists independently of any individual Booking.
+
+   - Booking (Many) ──────> (1) User
+     * Type: Unidirectional Association (via 'private Long userId')
+     * Details: Links a reservation to the registered guest who placed it.
+
+   - BookingService (1) ──────> (1) RoomService
+     * Type: Service-to-Service Association
+     * Details: 'BookingService' collaborates with 'RoomService' to look up
+       rooms by ID/slug and refresh room availability after booking creation.
+
+
+--------------------------------------------------------------------------------
+3. AGGREGATION ("HAS-A" / Shared Ownership - Weak Lifecycle Dependency)
+--------------------------------------------------------------------------------
+Definition: A "whole-part" relationship where the parent class holds a reference
+to a child object injected from outside (Dependency Injection). If the parent
+is destroyed, the injected collaborator still exists independently.
+
+A) Controllers Aggregating Services:
+   - AuthController    ◇────── UserService
+   - RoomController    ◇────── RoomService
+   - BookingController ◇────── BookingService
+   - ReviewController  ◇────── ReviewService
+   - PromoController   ◇────── PromoCodeService
+   - AdminController   ◇────── UserService, RoomService, BookingService, ReviewService
+
+B) Services Aggregating Repositories:
+   - BaseService<T>    ◇────── JpaRepository<T, Long>
+   - UserService       ◇────── UserRepository
+   - RoomService       ◇────── RoomRepository, BookingRepository
+   - BookingService    ◇────── BookingRepository
+   - ReviewService     ◇────── ReviewRepository
+   - PromoCodeService  ◇────── PromoCodeRepository
+
+C) Data Seeder Aggregating Repositories:
+   - DataInitializer   ◇────── RoomRepository, UserRepository, ReviewRepository,
+                               PromoCodeRepository, BookingRepository
+
+
+--------------------------------------------------------------------------------
+4. COMPOSITION ("PART-OF" / Strong Ownership - Dependent Lifecycle)
+--------------------------------------------------------------------------------
+Definition: A strong "whole-part" relationship where the contained part cannot
+exist meaningfully outside its owning class and shares the owner's lifecycle.
+
+   - BookingRequest ◆────── GuestInfoDto
+     * Details: 'BookingRequest' contains 'private GuestInfoDto guestInfo'. The
+       guest info payload is created and destroyed as part of the booking request.
+
+   - Room ◆────── List<String> amenities & List<String> images (@ElementCollection)
+     * Details: Stored in dependent collection tables ('room_amenity_names' and
+       'room_image_urls'). Their lifecycle is strictly bound to the owning 'Room'.
+
+   - User ◆────── List<String> savedRoomIds (@ElementCollection)
+     * Details: Stored in the dependent collection table ('user_saved_rooms').
+       Exists only as part of the owning 'User' entity.
+
+   - Booking ◆────── Guest Snapshot & Financial Breakdown
+     * Details: Guest details ('guestFullName', 'guestEmail', 'guestPhone',
+       'guestNicPassport') and invoice totals are composed directly inside the
+       'Booking' record and exposed as a composed map via 'getGuestInfo()'.
+
+
+--------------------------------------------------------------------------------
+5. DEPENDENCY ("DEPENDS-ON" / Transient Method Parameter or Return Usage)
+--------------------------------------------------------------------------------
+Definition: A weaker "uses" relationship where a class temporarily uses another
+class as a method parameter, local variable, or return type without storing it
+as a permanent field.
+
+   - AuthController    - - -> AuthRequest, RegisterRequest, UpdateProfileRequest, User
+   - UserService       - - -> RegisterRequest, UpdateProfileRequest, User, HttpClient
+   - RoomController    - - -> Room
+   - RoomService       - - -> Room, Booking
+   - Room              - - -> Booking (used in 'updateAvailability(List<Booking>)')
+   - BookingController - - -> BookingRequest, CancelBookingRequest, RateBookingRequest, Booking
+   - BookingService    - - -> BookingRequest, GuestInfoDto, Booking, Room
+   - ReviewController  - - -> ReviewRequest, Review
+   - ReviewService     - - -> ReviewRequest, Review
+   - PromoController   - - -> PromoValidateRequest, PromoCode
+   - PromoCodeService  - - -> PromoCode
+   - AdminController   - - -> User, Room, Booking, Review
+
+
+================================================================================
+PART 2: CRC (CLASS - RESPONSIBILITY - COLLABORATOR) CARDS (ALL BACKEND CLASSES)
+================================================================================
+
+--------------------------------------------------------------------------------
+SECTION A: SHARED ABSTRACT BASE CLASSES
+--------------------------------------------------------------------------------
+
++------------------------------------------------------------------------------+
+| Class Name: BaseEntity (Abstract Superclass)                                 |
+| Package:    com.wd32.Hotel_Reservation.model                                 |
++-----------------------------------------+------------------------------------+
+| Responsibilities                        | Collaborators                      |
++-----------------------------------------+------------------------------------+
+| - Maintain primary key 'id' (Long) and  | - None (Root Superclass for all    |
+|   creation timestamp 'createdAt'.       |   domain entities)                 |
+| - Provide getters and setters for ID    |                                    |
+|   and creation timestamp.               |                                    |
+| - Define abstract 'validate()' contract |                                    |
+|   that all entity subclasses must       |                                    |
+|   implement.                            |                                    |
++-----------------------------------------+------------------------------------+
+
++------------------------------------------------------------------------------+
+| Class Name: BaseService<T extends BaseEntity> (Abstract Generic Class)       |
+| Package:    com.wd32.Hotel_Reservation.service                               |
++-----------------------------------------+------------------------------------+
+| Responsibilities                        | Collaborators                      |
++-----------------------------------------+------------------------------------+
+| - Hold generic 'JpaRepository<T, Long>' | - BaseEntity                       |
+|   reference for persistence.            | - JpaRepository                    |
+| - Retrieve all records ('getAll()').    |                                    |
+| - Find record by ID ('findById()',      |                                    |
+|   'getById()') and throw exception if   |                                    |
+|   not found.                            |                                    |
+| - Trigger polymorphic 'entity.validate()'|                                   |
+|   before saving ('save()').             |                                    |
+| - Delete record by ID ('delete()').     |                                    |
++-----------------------------------------+------------------------------------+
+
++------------------------------------------------------------------------------+
+| Class Name: BaseController (Abstract Superclass)                             |
+| Package:    com.wd32.Hotel_Reservation.controller                            |
++-----------------------------------------+------------------------------------+
+| Responsibilities                        | Collaborators                      |
++-----------------------------------------+------------------------------------+
+| - Handle 'IllegalArgumentException' and | - ResponseEntity                   |
+|   return HTTP 400 Bad Request JSON.     | - HttpStatus                       |
+| - Handle general 'Exception' and return |                                    |
+|   HTTP 500 Internal Server Error JSON.  |                                    |
+| - Parse and sanitize string IDs into    |                                    |
+|   numeric 'Long' values ('parseId()').  |                                    |
++-----------------------------------------+------------------------------------+
+
+
+--------------------------------------------------------------------------------
+SECTION B: COMPONENT 01 - GUEST MANAGEMENT (CRC CARDS)
+--------------------------------------------------------------------------------
+
++------------------------------------------------------------------------------+
+| Class Name: User (extends BaseEntity)                                        |
+| Package:    com.wd32.Hotel_Reservation.model                                 |
++-----------------------------------------+------------------------------------+
+| Responsibilities                        | Collaborators                      |
++-----------------------------------------+------------------------------------+
+| - Encapsulate guest and staff profile   | - BaseEntity (Superclass)          |
+|   data (fullName, email, password,      |                                    |
+|   phone, city, country, avatarUrl,      |                                    |
+|   role, status, savedRoomIds).          |                                    |
+| - Validate user full name and email     |                                    |
+|   format ('validate()').                |                                    |
+| - Check if user holds an administrative |                                    |
+|   role ('hasAdminRole()').              |                                    |
+| - Add or remove bookmarked room IDs     |                                    |
+|   ('toggleSavedRoom()').                |                                    |
+| - Automatically update 'updatedAt'      |                                    |
+|   timestamp on modification.            |                                    |
++-----------------------------------------+------------------------------------+
+
++------------------------------------------------------------------------------+
+| Class Name: UserRepository (extends JpaRepository<User, Long>)               |
+| Package:    com.wd32.Hotel_Reservation.repository                            |
++-----------------------------------------+------------------------------------+
+| Responsibilities                        | Collaborators                      |
++-----------------------------------------+------------------------------------+
+| - Perform database CRUD operations for  | - User                             |
+|   'User' entities.                      | - JpaRepository                    |
+| - Query user by email ('findByEmail()').|                                    |
+| - Check if an email is already          |                                    |
+|   registered ('existsByEmail()').       |                                    |
++-----------------------------------------+------------------------------------+
+
++------------------------------------------------------------------------------+
+| Class Name: UserService (extends BaseService<User>)                          |
+| Package:    com.wd32.Hotel_Reservation.service                               |
++-----------------------------------------+------------------------------------+
+| Responsibilities                        | Collaborators                      |
++-----------------------------------------+------------------------------------+
+| - Hash plain-text passwords with        | - BaseService (Superclass)         |
+|   SHA-256 and verify credentials.       | - UserRepository                   |
+| - Authenticate login requests and       | - User                             |
+|   upgrade legacy passwords.             | - RegisterRequest                  |
+| - Register new guest accounts.          | - UpdateProfileRequest             |
+| - Update guest profile details,         | - HttpClient (ImgBB API)           |
+|   passwords, and saved rooms.           |                                    |
+| - Upload base64 avatars to ImgBB and    |                                    |
+|   remove avatars.                       |                                    |
+| - Filter, create, update, and delete    |                                    |
+|   admin/staff accounts.                 |                                    |
++-----------------------------------------+------------------------------------+
+
++------------------------------------------------------------------------------+
+| Class Name: AuthController (extends BaseController)                          |
+| Package:    com.wd32.Hotel_Reservation.controller                            |
++-----------------------------------------+------------------------------------+
+| Responsibilities                        | Collaborators                      |
++-----------------------------------------+------------------------------------+
+| - Expose REST endpoints under           | - BaseController (Superclass)      |
+|   '/api/auth'.                          | - UserService                      |
+| - Process guest login, registration,    | - User                             |
+|   and logout requests.                  | - AuthRequest                      |
+| - Attach and clear 'serene_session' and | - RegisterRequest                  |
+|   'serene_role' HTTP cookies.           | - UpdateProfileRequest             |
+| - Handle profile retrieval, updates,    | - HttpServletResponse              |
+|   password changes, avatar uploads, and |                                    |
+|   saved-room toggling.                  |                                    |
++-----------------------------------------+------------------------------------+
+
++------------------------------------------------------------------------------+
+| Class Name: AuthRequest / RegisterRequest / UpdateProfileRequest (DTOs)      |
+| Package:    com.wd32.Hotel_Reservation.dto                                   |
++-----------------------------------------+------------------------------------+
+| Responsibilities                        | Collaborators                      |
++-----------------------------------------+------------------------------------+
+| - Carry client JSON request payloads    | - AuthController                   |
+|   for login ('AuthRequest'), sign-up    | - UserService                      |
+|   ('RegisterRequest'), and profile      |                                    |
+|   updates ('UpdateProfileRequest').     |                                    |
++-----------------------------------------+------------------------------------+
+
+
+--------------------------------------------------------------------------------
+SECTION C: COMPONENT 02 - ROOM MANAGEMENT (CRC CARDS)
+--------------------------------------------------------------------------------
+
++------------------------------------------------------------------------------+
+| Class Name: Room (extends BaseEntity)                                        |
+| Package:    com.wd32.Hotel_Reservation.model                                 |
++-----------------------------------------+------------------------------------+
+| Responsibilities                        | Collaborators                      |
++-----------------------------------------+------------------------------------+
+| - Encapsulate room details, pricing,    | - BaseEntity (Superclass)          |
+|   capacity, amenities, images, and      | - Booking                          |
+|   inventory counts.                     |                                    |
+| - Validate room name and price per      |                                    |
+|   night ('validate()').                 |                                    |
+| - Update mutable room fields from a     |                                    |
+|   source Room object ('updateFrom()').  |                                    |
+| - Calculate occupied and available room |                                    |
+|   numbers dynamically from active       |                                    |
+|   bookings ('updateAvailability()').    |                                    |
++-----------------------------------------+------------------------------------+
+
++------------------------------------------------------------------------------+
+| Class Name: RoomRepository (extends JpaRepository<Room, Long>)               |
+| Package:    com.wd32.Hotel_Reservation.repository                            |
++-----------------------------------------+------------------------------------+
+| Responsibilities                        | Collaborators                      |
++-----------------------------------------+------------------------------------+
+| - Persist and retrieve 'Room' entities. | - Room                             |
+| - Find room by URL slug ('findBySlug'). | - JpaRepository                    |
+| - Filter rooms by category, price       |                                    |
+|   range, and guest capacity via custom  |                                    |
+|   JPQL query ('searchRooms()').         |                                    |
++-----------------------------------------+------------------------------------+
+
++------------------------------------------------------------------------------+
+| Class Name: RoomService (extends BaseService<Room>)                          |
+| Package:    com.wd32.Hotel_Reservation.service                               |
++-----------------------------------------+------------------------------------+
+| Responsibilities                        | Collaborators                      |
++-----------------------------------------+------------------------------------+
+| - Retrieve all rooms and filtered rooms | - BaseService (Superclass)         |
+|   with live availability enrichment.    | - RoomRepository                   |
+| - Resolve a room by numeric ID,         | - BookingRepository                |
+|   'room-' prefixed ID, or slug.         | - Room                             |
+| - Assign default inventory/room numbers | - Booking                          |
+|   when saving new rooms ('save()').     |                                    |
+| - Update existing room details          |                                    |
+|   ('updateRoom()').                     |                                    |
+| - Enrich single or multiple rooms with  |                                    |
+|   active booking occupancy data.        |                                    |
++-----------------------------------------+------------------------------------+
+
++------------------------------------------------------------------------------+
+| Class Name: RoomController (extends BaseController)                          |
+| Package:    com.wd32.Hotel_Reservation.controller                            |
++-----------------------------------------+------------------------------------+
+| Responsibilities                        | Collaborators                      |
++-----------------------------------------+------------------------------------+
+| - Expose REST endpoints under           | - BaseController (Superclass)      |
+|   '/api/rooms'.                         | - RoomService                      |
+| - Handle GET requests for room search   | - Room                             |
+|   and single room lookup by ID/slug.    |                                    |
+| - Handle POST, PUT, and DELETE requests |                                    |
+|   to create, update, and remove rooms.  |                                    |
++-----------------------------------------+------------------------------------+
+
+
+--------------------------------------------------------------------------------
+SECTION D: COMPONENT 03 - RESERVATION MANAGEMENT (CRC CARDS)
+--------------------------------------------------------------------------------
+
++------------------------------------------------------------------------------+
+| Class Name: Booking (extends BaseEntity)                                     |
+| Package:    com.wd32.Hotel_Reservation.model                                 |
++-----------------------------------------+------------------------------------+
+| Responsibilities                        | Collaborators                      |
++-----------------------------------------+------------------------------------+
+| - Encapsulate reservation dates, guest  | - BaseEntity (Superclass)          |
+|   count, assigned room, guest snapshot, | - Room                             |
+|   financial totals, and booking status. |                                    |
+| - Validate required guest and room      |                                    |
+|   fields ('validate()').                |                                    |
+| - Determine if booking actively occupies|                                    |
+|   a room ('hasActiveOccupation()').     |                                    |
+| - Calculate subtotal, service charge,   |                                    |
+|   taxes, discount, and total amount     |                                    |
+|   ('calculateFinancials()').            |                                    |
+| - Cancel booking with reason ('cancel') |                                    |
+|   and record guest rating               |                                    |
+|   ('applyRating()').                    |                                    |
++-----------------------------------------+------------------------------------+
+
++------------------------------------------------------------------------------+
+| Class Name: BookingRepository (extends JpaRepository<Booking, Long>)         |
+| Package:    com.wd32.Hotel_Reservation.repository                            |
++-----------------------------------------+------------------------------------+
+| Responsibilities                        | Collaborators                      |
++-----------------------------------------+------------------------------------+
+| - Persist and query 'Booking' entities. | - Booking                          |
+| - Find booking by unique reference      | - JpaRepository                    |
+|   code ('findByBookingReference()').    |                                    |
+| - Retrieve bookings ordered by creation |                                    |
+|   date for a guest email, user ID,      |                                    |
+|   room ID, or all bookings.             |                                    |
++-----------------------------------------+------------------------------------+
+
++------------------------------------------------------------------------------+
+| Class Name: BookingService (extends BaseService<Booking>)                    |
+| Package:    com.wd32.Hotel_Reservation.service                               |
++-----------------------------------------+------------------------------------+
+| Responsibilities                        | Collaborators                      |
++-----------------------------------------+------------------------------------+
+| - Validate room availability and        | - BaseService (Superclass)         |
+|   maintenance status before booking.    | - BookingRepository                |
+| - Allocate requested or next vacant     | - RoomService                      |
+|   physical room number.                 | - Booking                          |
+| - Create new reservation with unique    | - Room                             |
+|   'SS-LK-XXXXX' reference code.         | - BookingRequest                   |
+| - Retrieve bookings by guest email,     | - GuestInfoDto                     |
+|   user ID, or booking reference.        |                                    |
+| - Cancel bookings, update reservation   |                                    |
+|   status, and record stay ratings.      |                                    |
++-----------------------------------------+------------------------------------+
+
++------------------------------------------------------------------------------+
+| Class Name: BookingController (extends BaseController)                       |
+| Package:    com.wd32.Hotel_Reservation.controller                            |
++-----------------------------------------+------------------------------------+
+| Responsibilities                        | Collaborators                      |
++-----------------------------------------+------------------------------------+
+| - Expose REST endpoints under           | - BaseController (Superclass)      |
+|   '/api/bookings'.                      | - BookingService                   |
+| - Handle booking creation (POST),       | - Booking                          |
+|   retrieval (GET), cancellation (PUT),  | - BookingRequest                   |
+|   rating (POST), status update (PUT),   | - CancelBookingRequest             |
+|   and deletion (DELETE).                | - RateBookingRequest               |
++-----------------------------------------+------------------------------------+
+
++------------------------------------------------------------------------------+
+| Class Name: BookingRequest / GuestInfoDto / CancelBookingRequest (DTOs)      |
+| Package:    com.wd32.Hotel_Reservation.dto                                   |
++-----------------------------------------+------------------------------------+
+| Responsibilities                        | Collaborators                      |
++-----------------------------------------+------------------------------------+
+| - Encapsulate incoming booking creation | - BookingController                |
+|   data ('BookingRequest'), nested guest | - BookingService                   |
+|   contact details ('GuestInfoDto'), and |                                    |
+|   cancellation reasons                  |                                    |
+|   ('CancelBookingRequest').             |                                    |
++-----------------------------------------+------------------------------------+
+
+
+--------------------------------------------------------------------------------
+SECTION E: COMPONENT 04 - ADMIN & STAFF MANAGEMENT (CRC CARDS)
+--------------------------------------------------------------------------------
+
++------------------------------------------------------------------------------+
+| Class Name: AdminController (extends BaseController)                         |
+| Package:    com.wd32.Hotel_Reservation.controller                            |
++-----------------------------------------+------------------------------------+
+| Responsibilities                        | Collaborators                      |
++-----------------------------------------+------------------------------------+
+| - Expose administrative REST endpoints  | - BaseController (Superclass)      |
+|   under '/api/admin'.                   | - UserService                      |
+| - Compute and return dashboard KPIs     | - RoomService                      |
+|   (total revenue, occupancy rate,       | - BookingService                   |
+|   physical room counts, user counts).   | - ReviewService                    |
+| - List all registered users and staff.  | - User, Room, Booking              |
+| - Handle creation (POST), updating      |                                    |
+|   (PUT), and deletion (DELETE) of       |                                    |
+|   hotel admin/staff accounts.           |                                    |
++-----------------------------------------+------------------------------------+
+
+
+--------------------------------------------------------------------------------
+SECTION F: COMPONENT 05 - BILLING & PAYMENT / PROMO MANAGEMENT (CRC CARDS)
+--------------------------------------------------------------------------------
+
++------------------------------------------------------------------------------+
+| Class Name: PromoCode (extends BaseEntity)                                   |
+| Package:    com.wd32.Hotel_Reservation.model                                 |
++-----------------------------------------+------------------------------------+
+| Responsibilities                        | Collaborators                      |
++-----------------------------------------+------------------------------------+
+| - Encapsulate promotional code details  | - BaseEntity (Superclass)          |
+|   (code, description, discountType,     |                                    |
+|   discountValue, minSpend, isActive).   |                                    |
+| - Validate promo code string and        |                                    |
+|   positive discount value ('validate'). |                                    |
+| - Calculate discount amount for a given |                                    |
+|   booking subtotal ('calculateDiscount')|                                    |
+|   supporting both fixed and percentage  |                                    |
+|   discounts.                            |                                    |
++-----------------------------------------+------------------------------------+
+
++------------------------------------------------------------------------------+
+| Class Name: PromoCodeRepository (extends JpaRepository<PromoCode, Long>)     |
+| Package:    com.wd32.Hotel_Reservation.repository                            |
++-----------------------------------------+------------------------------------+
+| Responsibilities                        | Collaborators                      |
++-----------------------------------------+------------------------------------+
+| - Persist and delete 'PromoCode'        | - PromoCode                        |
+|   entities.                             | - JpaRepository                    |
+| - Lookup active promo code case-        |                                    |
+|   insensitively                         |                                    |
+|   ('findByCodeIgnoreCaseAndIsActiveTrue').|                                  |
++-----------------------------------------+------------------------------------+
+
++------------------------------------------------------------------------------+
+| Class Name: PromoCodeService (extends BaseService<PromoCode>)                |
+| Package:    com.wd32.Hotel_Reservation.service                               |
++-----------------------------------------+------------------------------------+
+| Responsibilities                        | Collaborators                      |
++-----------------------------------------+------------------------------------+
+| - Validate promo code eligibility       | - BaseService (Superclass)         |
+|   against active status and minimum     | - PromoCodeRepository              |
+|   spend threshold ('validate()').       | - PromoCode                        |
+| - Return discount rate, calculated      |                                    |
+|   discount amount, and validation       |                                    |
+|   status message.                       |                                    |
+| - Inherit promo creation, listing, and  |                                    |
+|   deletion from 'BaseService'.          |                                    |
++-----------------------------------------+------------------------------------+
+
++------------------------------------------------------------------------------+
+| Class Name: PromoController (extends BaseController)                         |
+| Package:    com.wd32.Hotel_Reservation.controller                            |
++-----------------------------------------+------------------------------------+
+| Responsibilities                        | Collaborators                      |
++-----------------------------------------+------------------------------------+
+| - Expose REST endpoints under           | - BaseController (Superclass)      |
+|   '/api/promos'.                        | - PromoCodeService                 |
+| - Validate promo codes during guest     | - PromoCode                        |
+|   checkout ('POST /api/promos/validate').| - PromoValidateRequest            |
+| - List, create, and delete promo codes. |                                    |
++-----------------------------------------+------------------------------------+
+
++------------------------------------------------------------------------------+
+| Class Name: PromoValidateRequest (DTO)                                       |
+| Package:    com.wd32.Hotel_Reservation.dto                                   |
++-----------------------------------------+------------------------------------+
+| Responsibilities                        | Collaborators                      |
++-----------------------------------------+------------------------------------+
+| - Hold promo 'code' and booking         | - PromoController                  |
+|   'subtotal' for discount validation.   | - PromoCodeService                 |
++-----------------------------------------+------------------------------------+
+
+
+--------------------------------------------------------------------------------
+SECTION G: COMPONENT 06 - FEEDBACK & REVIEW MANAGEMENT (CRC CARDS)
+--------------------------------------------------------------------------------
+
++------------------------------------------------------------------------------+
+| Class Name: Review (extends BaseEntity)                                      |
+| Package:    com.wd32.Hotel_Reservation.model                                 |
++-----------------------------------------+------------------------------------+
+| Responsibilities                        | Collaborators                      |
++-----------------------------------------+------------------------------------+
+| - Encapsulate guest testimonial data    | - BaseEntity (Superclass)          |
+|   (guestName, location, avatar, rating, |                                    |
+|   comment, date, roomBooked, likes,     |                                    |
+|   hearts, status, isFeatured).          |                                    |
+| - Validate guest name and review        |                                    |
+|   comment ('validate()').               |                                    |
+| - Increment or decrement review like    |                                    |
+|   and heart counters ('adjustLikes()',  |                                    |
+|   'adjustHearts()').                    |                                    |
++-----------------------------------------+------------------------------------+
+
++------------------------------------------------------------------------------+
+| Class Name: ReviewRepository (extends JpaRepository<Review, Long>)           |
+| Package:    com.wd32.Hotel_Reservation.repository                            |
++-----------------------------------------+------------------------------------+
+| Responsibilities                        | Collaborators                      |
++-----------------------------------------+------------------------------------+
+| - Persist and delete 'Review' entities. | - Review                           |
+| - Fetch approved reviews ordered by     | - JpaRepository                    |
+|   newest first                          |                                    |
+|   ('findByStatusOrderByCreatedAtDesc'). |                                    |
++-----------------------------------------+------------------------------------+
+
++------------------------------------------------------------------------------+
+| Class Name: ReviewService (extends BaseService<Review>)                      |
+| Package:    com.wd32.Hotel_Reservation.service                               |
++-----------------------------------------+------------------------------------+
+| Responsibilities                        | Collaborators                      |
++-----------------------------------------+------------------------------------+
+| - Retrieve all approved public reviews. | - BaseService (Superclass)         |
+| - Construct and save new guest reviews  | - ReviewRepository                 |
+|   ('createReview()').                   | - Review                           |
+| - Provide overloaded methods to toggle  | - ReviewRequest                    |
+|   likes and hearts on reviews           |                                    |
+|   ('toggleLike()', 'toggleHeart()').    |                                    |
++-----------------------------------------+------------------------------------+
+
++------------------------------------------------------------------------------+
+| Class Name: ReviewController (extends BaseController)                        |
+| Package:    com.wd32.Hotel_Reservation.controller                            |
++-----------------------------------------+------------------------------------+
+| Responsibilities                        | Collaborators                      |
++-----------------------------------------+------------------------------------+
+| - Expose REST endpoints under           | - BaseController (Superclass)      |
+|   '/api/reviews'.                       | - ReviewService                    |
+| - Handle listing approved reviews (GET),| - Review                           |
+|   submitting new reviews (POST),        | - ReviewRequest                    |
+|   reacting with likes/hearts (POST),    |                                    |
+|   and deleting reviews (DELETE).        |                                    |
++-----------------------------------------+------------------------------------+
+
++------------------------------------------------------------------------------+
+| Class Name: ReviewRequest / RateBookingRequest (DTOs)                        |
+| Package:    com.wd32.Hotel_Reservation.dto                                   |
++-----------------------------------------+------------------------------------+
+| Responsibilities                        | Collaborators                      |
++-----------------------------------------+------------------------------------+
+| - Carry public testimonial submission   | - ReviewController                 |
+|   fields ('ReviewRequest') and booking  | - ReviewService                    |
+|   star-rating payloads                  | - BookingController                |
+|   ('RateBookingRequest').               | - BookingService                   |
++-----------------------------------------+------------------------------------+
+
+
+--------------------------------------------------------------------------------
+SECTION H: CONFIGURATION & APPLICATION BOOTSTRAP (CRC CARDS)
+--------------------------------------------------------------------------------
+
++------------------------------------------------------------------------------+
+| Class Name: DataInitializer (implements CommandLineRunner)                   |
+| Package:    com.wd32.Hotel_Reservation.config                                |
++-----------------------------------------+------------------------------------+
+| Responsibilities                        | Collaborators                      |
++-----------------------------------------+------------------------------------+
+| - Seed initial rooms, promo codes,      | - RoomRepository, Room             |
+|   admin/guest users, reviews, and       | - PromoCodeRepository, PromoCode   |
+|   sample bookings on startup.           | - UserRepository, User             |
+| - Ensure room inventory counts and      | - ReviewRepository, Review         |
+|   assigned booking room numbers are     | - BookingRepository, Booking       |
+|   consistent.                           |                                    |
++-----------------------------------------+------------------------------------+
+
++------------------------------------------------------------------------------+
+| Class Name: WebConfig (implements WebMvcConfigurer)                          |
+| Package:    com.wd32.Hotel_Reservation.config                                |
++-----------------------------------------+------------------------------------+
+| Responsibilities                        | Collaborators                      |
++-----------------------------------------+------------------------------------+
+| - Configure global CORS mappings for    | - CorsRegistry                     |
+|   all API endpoints.                    | - WebMvcConfigurer                 |
++-----------------------------------------+------------------------------------+
+
++------------------------------------------------------------------------------+
+| Class Name: SpaController & HotelReservationApplication                      |
+| Package:    com.wd32.Hotel_Reservation                                       |
++-----------------------------------------+------------------------------------+
+| Responsibilities                        | Collaborators                      |
++-----------------------------------------+------------------------------------+
+| - Bootstrap the Spring Boot application | - SpringApplication                |
+|   ('HotelReservationApplication').      |                                    |
+| - Forward client-side SPA routes to     |                                    |
+|   'index.html' ('SpaController').       |                                    |
++-----------------------------------------+------------------------------------+

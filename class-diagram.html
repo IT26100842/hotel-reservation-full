@@ -1,0 +1,2335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SereneStay Hotel & Resort — Backend Class Diagram & Architecture</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <!-- Mermaid.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <!-- svg-pan-zoom CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+
+  <style>
+    :root {
+      --bg-primary: #0b0f19;
+      --bg-secondary: #111827;
+      --bg-card: rgba(17, 24, 39, 0.85);
+      --bg-card-hover: rgba(31, 41, 55, 0.9);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-accent: rgba(212, 175, 55, 0.35);
+      --text-main: #f3f4f6;
+      --text-muted: #9ca3af;
+      --gold-primary: #c5a880;
+      --gold-light: #e6ca9f;
+      --gold-dark: #937346;
+      --accent-blue: #38bdf8;
+      --accent-emerald: #34d399;
+      --accent-purple: #c084fc;
+      --accent-amber: #fbbf24;
+      --accent-rose: #f43f5e;
+      --canvas-bg: #0d121f;
+      --shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    }
+
+    [data-theme="light"] {
+      --bg-primary: #f8fafc;
+      --bg-secondary: #ffffff;
+      --bg-card: rgba(255, 255, 255, 0.95);
+      --bg-card-hover: #ffffff;
+      --border-color: rgba(0, 0, 0, 0.08);
+      --border-accent: rgba(180, 140, 50, 0.35);
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --gold-primary: #9b7738;
+      --gold-light: #b89146;
+      --gold-dark: #7a5a22;
+      --accent-blue: #0284c7;
+      --accent-emerald: #059669;
+      --accent-purple: #7c3aed;
+      --accent-amber: #d97706;
+      --accent-rose: #e11d48;
+      --canvas-bg: #f1f5f9;
+      --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-main);
+      line-height: 1.5;
+      min-height: 100vh;
+      overflow-x: hidden;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    /* Ambient background gradient */
+    .bg-glow {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 480px;
+      background: radial-gradient(circle at 50% 0%, rgba(197, 168, 128, 0.12) 0%, rgba(56, 189, 248, 0.04) 40%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      max-width: 1680px;
+      margin: 0 auto;
+      padding: 24px 28px 60px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .brand-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--gold-dark), var(--gold-primary));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #0b0f19;
+      font-weight: 800;
+      font-size: 22px;
+      box-shadow: 0 4px 15px rgba(197, 168, 128, 0.3);
+    }
+
+    .brand-title h1 {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      background: linear-gradient(90deg, var(--text-main), var(--gold-primary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-title p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border-color);
+      background: var(--bg-secondary);
+      color: var(--text-main);
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .btn:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--gold-primary);
+      transform: translateY(-1px);
+    }
+
+    .btn-gold {
+      background: linear-gradient(135deg, var(--gold-dark), var(--gold-primary));
+      color: #0b0f19;
+      border: none;
+      font-weight: 700;
+    }
+
+    .btn-gold:hover {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
+    }
+
+    /* Metric Badges Strip */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .metric-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(12px);
+    }
+
+    .metric-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--card-accent, var(--gold-primary));
+    }
+
+    .metric-count {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--text-main);
+      line-height: 1.1;
+    }
+
+    .metric-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
+      margin-top: 6px;
+      font-weight: 600;
+    }
+
+    .metric-sub {
+      font-size: 11px;
+      color: var(--gold-primary);
+      margin-top: 4px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Main Tab Navigation */
+    .nav-tabs-wrapper {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 6px;
+      display: flex;
+      gap: 6px;
+      margin-bottom: 20px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .nav-tabs-wrapper::-webkit-scrollbar { display: none; }
+
+    .tab-btn {
+      flex: 1;
+      min-width: 140px;
+      padding: 10px 16px;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .tab-btn.active {
+      background: var(--gold-primary);
+      color: #0b0f19;
+      font-weight: 700;
+      box-shadow: 0 4px 12px rgba(197, 168, 128, 0.25);
+    }
+
+    /* Canvas Frame */
+    .diagram-viewport {
+      background: var(--canvas-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+      min-height: 720px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .canvas-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 20px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-color);
+      flex-wrap: wrap;
+      gap: 12px;
+      z-index: 10;
+    }
+
+    .toolbar-left, .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .view-chip {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(197, 168, 128, 0.15);
+      color: var(--gold-primary);
+      border: 1px solid rgba(197, 168, 128, 0.3);
+    }
+
+    .zoom-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 700;
+      transition: all 0.15s ease;
+    }
+
+    .zoom-btn:hover {
+      background: var(--gold-primary);
+      color: #0b0f19;
+    }
+
+    /* Diagram Render Stage */
+    .diagram-stage {
+      flex: 1;
+      width: 100%;
+      height: 700px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: grab;
+    }
+
+    .diagram-stage:active {
+      cursor: grabbing;
+    }
+
+    .diagram-stage svg {
+      width: 100% !important;
+      height: 100% !important;
+      max-width: none !important;
+    }
+
+    /* UML Legend Footer */
+    .legend-bar {
+      padding: 14px 20px;
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 24px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .legend-line {
+      width: 24px;
+      height: 2px;
+      display: inline-block;
+      position: relative;
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+    }
+
+    /* Class Catalog & Search View */
+    .catalog-section {
+      margin-top: 36px;
+    }
+
+    .catalog-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .search-box-wrap {
+      position: relative;
+      min-width: 320px;
+    }
+
+    .search-box {
+      width: 100%;
+      padding: 11px 16px 11px 42px;
+      border-radius: 12px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      font-size: 14px;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .search-box:focus {
+      border-color: var(--gold-primary);
+      box-shadow: 0 0 0 3px rgba(197, 168, 128, 0.15);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    .classes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 20px;
+    }
+
+    .class-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow);
+      transition: all 0.25s ease;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .class-card:hover {
+      transform: translateY(-3px);
+      border-color: var(--gold-primary);
+      box-shadow: 0 16px 32px -8px rgba(0, 0, 0, 0.3);
+    }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .card-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-main);
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: -0.02em;
+    }
+
+    .card-pkg {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+      margin-top: 2px;
+    }
+
+    .badge-pill {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .badge-entity { background: rgba(251, 191, 36, 0.15); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); }
+    .badge-service { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); }
+    .badge-controller { background: rgba(192, 132, 252, 0.15); color: #c084fc; border: 1px solid rgba(192, 132, 252, 0.3); }
+    .badge-repo { background: rgba(52, 211, 153, 0.15); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.3); }
+    .badge-dto { background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3); }
+    .badge-config { background: rgba(244, 63, 94, 0.15); color: #f43f5e; border: 1px solid rgba(244, 63, 94, 0.3); }
+
+    .card-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+      line-height: 1.45;
+    }
+
+    .card-stats-row {
+      display: flex;
+      gap: 16px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border-color);
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .card-stat-item strong {
+      color: var(--gold-primary);
+      margin-right: 4px;
+    }
+
+    /* Modal / Inspector Drawer */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .inspector-modal {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-accent);
+      border-radius: 20px;
+      max-width: 900px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8);
+      position: relative;
+    }
+
+    .modal-head {
+      padding: 24px 28px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      position: sticky;
+      top: 0;
+      background: var(--bg-secondary);
+      z-index: 5;
+    }
+
+    .modal-body {
+      padding: 28px;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 24px;
+      cursor: pointer;
+      line-height: 1;
+      padding: 4px;
+      border-radius: 8px;
+    }
+
+    .close-btn:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--gold-primary);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .item-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-bottom: 24px;
+      background: var(--bg-primary);
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+    }
+
+    .item-table th {
+      text-align: left;
+      padding: 10px 14px;
+      background: rgba(255, 255, 255, 0.02);
+      color: var(--text-muted);
+      font-weight: 600;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+
+    .item-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border-color);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+    }
+
+    .item-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Print Styles */
+    @media print {
+      body { background: #fff !important; color: #000 !important; }
+      .bg-glow, .canvas-toolbar, .header-actions, .nav-tabs-wrapper, .catalog-section { display: none !important; }
+      .diagram-viewport { border: none !important; box-shadow: none !important; min-height: auto !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-glow"></div>
+
+  <div class="container">
+    <!-- Top Header -->
+    <header>
+      <div class="brand-group">
+        <div class="brand-icon">S</div>
+        <div class="brand-title">
+          <h1>SereneStay Resort — Backend UML Class Blueprint</h1>
+          <p>Spring Boot 3.5.x • Java 21 • Hibernate JPA • MySQL RDS • Complete Architectural Class Diagram</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn" id="themeToggleBtn" onclick="toggleTheme()">
+          <span id="themeIcon">☀️</span> Light Mode
+        </button>
+        <button class="btn" onclick="exportSvg()">
+          <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+          Export SVG
+        </button>
+        <button class="btn btn-gold" onclick="window.print()">
+          <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+          Print / PDF
+        </button>
+      </div>
+    </header>
+
+    <!-- Metrics Strip -->
+    <div class="metrics-grid">
+      <div class="metric-card" style="--card-accent: var(--gold-primary);">
+        <div class="metric-count">34</div>
+        <div class="metric-label">Total Classes</div>
+        <div class="metric-sub">com.wd32.Hotel_Reservation</div>
+      </div>
+      <div class="metric-card" style="--card-accent: var(--accent-amber);">
+        <div class="metric-count">5</div>
+        <div class="metric-label">JPA Entities</div>
+        <div class="metric-sub">@Entity Models</div>
+      </div>
+      <div class="metric-card" style="--card-accent: var(--accent-emerald);">
+        <div class="metric-count">5</div>
+        <div class="metric-label">Repositories</div>
+        <div class="metric-sub">Spring Data JPA</div>
+      </div>
+      <div class="metric-card" style="--card-accent: var(--accent-blue);">
+        <div class="metric-count">5</div>
+        <div class="metric-label">Business Services</div>
+        <div class="metric-sub">@Service Components</div>
+      </div>
+      <div class="metric-card" style="--card-accent: var(--accent-purple);">
+        <div class="metric-count">7</div>
+        <div class="metric-label">Controllers</div>
+        <div class="metric-sub">REST & SPA Endpoints</div>
+      </div>
+      <div class="metric-card" style="--card-accent: var(--accent-rose);">
+        <div class="metric-count">9</div>
+        <div class="metric-label">DTO Payloads</div>
+        <div class="metric-sub">Data Transfer Objects</div>
+      </div>
+    </div>
+
+    <!-- View Tabs -->
+    <div class="nav-tabs-wrapper">
+      <button class="tab-btn active" onclick="switchView('full', this)">
+        <span>🗺️</span> Full Architecture
+      </button>
+      <button class="tab-btn" onclick="switchView('domain', this)">
+        <span>🏛️</span> Domain Entities
+      </button>
+      <button class="tab-btn" onclick="switchView('services', this)">
+        <span>⚙️</span> Services Layer
+      </button>
+      <button class="tab-btn" onclick="switchView('controllers', this)">
+        <span>🌐</span> REST Controllers
+      </button>
+      <button class="tab-btn" onclick="switchView('repositories', this)">
+        <span>💾</span> Repositories
+      </button>
+      <button class="tab-btn" onclick="switchView('dtos', this)">
+        <span>📦</span> DTO Models
+      </button>
+      <button class="tab-btn" onclick="scrollToCatalog()">
+        <span>📚</span> Class Catalog
+      </button>
+    </div>
+
+    <!-- Diagram Viewport -->
+    <div class="diagram-viewport" id="diagramViewport">
+      <div class="canvas-toolbar">
+        <div class="toolbar-left">
+          <span class="view-chip" id="currentViewLabel">Full Architecture Blueprint</span>
+          <span style="font-size: 12px; color: var(--text-muted);">Pan: Click & Drag • Zoom: Scroll Wheel</span>
+        </div>
+        <div class="toolbar-right">
+          <button class="zoom-btn" title="Zoom In" onclick="zoomIn()">+</button>
+          <button class="zoom-btn" title="Zoom Out" onclick="zoomOut()">−</button>
+          <button class="zoom-btn" title="Reset View" onclick="resetZoom()">⟲</button>
+          <button class="zoom-btn" title="Fit to Screen" onclick="fitView()">⛶</button>
+        </div>
+      </div>
+
+      <!-- SVG Stage Container -->
+      <div class="diagram-stage" id="diagramStage">
+        <div id="mermaidTarget" class="mermaid" style="width: 100%; height: 100%;">
+          <!-- Diagram rendered dynamically -->
+        </div>
+      </div>
+
+      <!-- Legend Footer -->
+      <div class="legend-bar">
+        <div class="legend-item">
+          <span class="legend-dot" style="background: #fbbf24;"></span>
+          <span>Entity (@Table)</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-dot" style="background: #38bdf8;"></span>
+          <span>Service (@Service)</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-dot" style="background: #c084fc;"></span>
+          <span>Controller (@RestController)</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-dot" style="background: #34d399;"></span>
+          <span>Repository (JpaRepository)</span>
+        </div>
+        <div class="legend-item">
+          <span class="legend-dot" style="background: #94a3b8;"></span>
+          <span>DTO (Request/Response)</span>
+        </div>
+        <div class="legend-item">
+          <span style="color: var(--gold-primary); font-weight: 700;">───►</span>
+          <span>Dependency Injection</span>
+        </div>
+        <div class="legend-item">
+          <span style="color: var(--accent-blue); font-weight: 700;">- - -▷</span>
+          <span>Realization (Implements)</span>
+        </div>
+        <div class="legend-item">
+          <span style="color: var(--accent-amber); font-weight: 700;">───*</span>
+          <span>Composition / Association</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Searchable Class Catalog -->
+    <div class="catalog-section" id="catalogSection">
+      <div class="catalog-header">
+        <div>
+          <h2 style="font-size: 20px; font-weight: 800; letter-spacing: -0.02em;">Backend Class Directory (34 Classes)</h2>
+          <p style="font-size: 13px; color: var(--text-muted); margin-top: 2px;">Click any card to inspect all fields, methods, JPA annotations, and endpoints</p>
+        </div>
+        <div class="search-box-wrap">
+          <svg class="search-icon" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          <input type="text" id="classSearch" class="search-box" placeholder="Filter classes (e.g. Booking, Service, Controller)..." oninput="filterClasses()" />
+        </div>
+      </div>
+
+      <div class="classes-grid" id="classesGrid">
+        <!-- Generated by JavaScript -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Inspector Modal -->
+  <div class="modal-backdrop" id="inspectorModal" onclick="closeModalOnBackdrop(event)">
+    <div class="inspector-modal">
+      <div class="modal-head">
+        <div>
+          <span id="modalStereotype" class="badge-pill badge-entity">@Entity</span>
+          <h2 id="modalTitle" style="font-size: 22px; font-weight: 800; font-family: 'JetBrains Mono', monospace; margin-top: 6px;">ClassName</h2>
+          <p id="modalPackage" style="font-size: 12px; color: var(--text-muted); font-family: 'JetBrains Mono', monospace;">com.wd32.Hotel_Reservation</p>
+        </div>
+        <button class="close-btn" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="modalBody">
+        <!-- Populated dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Diagram Definitions & Logic -->
+  <script>
+    // -------------------------------------------------------------
+    // 1. Mermaid UML Definitions for Each View
+    // -------------------------------------------------------------
+    const diagramSources = {
+      full: `classDiagram
+    direction TB
+    %% Controllers Layer
+    class AuthController {
+        <<RestController>>
+        -UserService userService
+        +login(AuthRequest request) ResponseEntity
+        +register(RegisterRequest request) ResponseEntity
+        +logout(HttpServletResponse response) ResponseEntity
+        +getProfile(Long id, String email) ResponseEntity
+        +updateProfile(Long id, UpdateProfileRequest request) ResponseEntity
+        +toggleSavedRoom(Long id, String roomId) ResponseEntity
+    }
+
+    class RoomController {
+        <<RestController>>
+        -RoomService roomService
+        +getRooms(String type, Double minPrice, Double maxPrice, Integer guests) ResponseEntity
+        +getRoomByIdOrSlug(String idOrSlug) ResponseEntity
+        +createRoom(Room room) ResponseEntity
+        +updateRoom(Long id, Room room) ResponseEntity
+        +deleteRoom(Long id) ResponseEntity
+    }
+
+    class BookingController {
+        <<RestController>>
+        -BookingService bookingService
+        +createBooking(BookingRequest request) ResponseEntity
+        +getBookings(String email, Long userId) ResponseEntity
+        +getBookingByReference(String reference) ResponseEntity
+        +cancelBooking(Long id, CancelBookingRequest request) ResponseEntity
+        +rateBooking(Long id, RateBookingRequest request) ResponseEntity
+        +updateBookingStatus(Long id, Map body) ResponseEntity
+        +deleteBooking(Long id) ResponseEntity
+    }
+
+    class PromoController {
+        <<RestController>>
+        -PromoCodeService promoCodeService
+        +validate(PromoValidateRequest request) ResponseEntity
+        +getAllPromos() ResponseEntity
+        +createPromo(PromoCode promoCode) ResponseEntity
+        +deletePromo(Long id) ResponseEntity
+    }
+
+    class ReviewController {
+        <<RestController>>
+        -ReviewService reviewService
+        +getReviews() ResponseEntity
+        +createReview(ReviewRequest request) ResponseEntity
+        +toggleLike(Long id) ResponseEntity
+        +toggleHeart(Long id) ResponseEntity
+        +deleteReview(Long id) ResponseEntity
+    }
+
+    class AdminController {
+        <<RestController>>
+        -UserRepository userRepository
+        -RoomRepository roomRepository
+        -BookingRepository bookingRepository
+        -ReviewRepository reviewRepository
+        +getStats() ResponseEntity
+        +getAllUsers() ResponseEntity
+        +getAllAdmins() ResponseEntity
+        +createAdmin(Map body) ResponseEntity
+        +updateAdmin(Long id, Map body) ResponseEntity
+        +deleteAdmin(Long id) ResponseEntity
+    }
+
+    class SpaController {
+        <<Controller>>
+        +forwardToIndex() String
+    }
+
+    %% Service Layer
+    class UserService {
+        <<Service>>
+        -UserRepository userRepository
+        +authenticate(String email, String password) User
+        +register(RegisterRequest req) User
+        +updateProfile(Long userId, UpdateProfileRequest req) User
+        +toggleSavedRoom(Long userId, String roomId) User
+        +findById(Long id) User
+    }
+
+    class RoomService {
+        <<Service>>
+        -RoomRepository roomRepository
+        +getAllRooms() Room[]
+        +searchRooms(String type, Double min, Double max, Integer guests) Room[]
+        +getRoomByIdOrSlug(String idOrSlug) Room
+        +saveRoom(Room room) Room
+        +updateRoom(Long id, Room updated) Room
+        +deleteRoom(Long id) void
+    }
+
+    class BookingService {
+        <<Service>>
+        -BookingRepository bookingRepository
+        -RoomService roomService
+        +createBooking(BookingRequest req) Booking
+        +getBookingsByGuest(String email, Long userId) Booking[]
+        +getBookingByReference(String reference) Booking
+        +cancelBooking(Long id, String reason) Booking
+        +rateBooking(Long id, Integer rating, String comment) Booking
+        +updateStatus(Long id, String status) Booking
+        +deleteBooking(Long id) void
+    }
+
+    class PromoCodeService {
+        <<Service>>
+        -PromoCodeRepository promoCodeRepository
+        +validate(String code, Double subtotal) Map
+        +save(PromoCode promoCode) PromoCode
+        +getAll() PromoCode[]
+        +delete(Long id) void
+    }
+
+    class ReviewService {
+        <<Service>>
+        -ReviewRepository reviewRepository
+        +getAllApprovedReviews() Review[]
+        +createReview(ReviewRequest req) Review
+        +toggleLike(Long reviewId) Review
+        +toggleHeart(Long reviewId) Review
+        +deleteReview(Long reviewId) void
+    }
+
+    %% Repository Layer
+    class UserRepository {
+        <<Repository>>
+        +findByEmail(String email) User
+        +existsByEmail(String email) boolean
+    }
+
+    class RoomRepository {
+        <<Repository>>
+        +findBySlug(String slug) Room
+        +findByType(String type) Room[]
+        +searchRooms(String type, Double min, Double max, Integer guests) Room[]
+    }
+
+    class BookingRepository {
+        <<Repository>>
+        +findByBookingReference(String ref) Booking
+        +findByGuestEmailOrderByCreatedAtDesc(String email) Booking[]
+        +findByUserIdOrderByCreatedAtDesc(Long userId) Booking[]
+    }
+
+    class PromoCodeRepository {
+        <<Repository>>
+        +findByCodeIgnoreCaseAndIsActiveTrue(String code) PromoCode
+    }
+
+    class ReviewRepository {
+        <<Repository>>
+        +findByStatusOrderByCreatedAtDesc(String status) Review[]
+    }
+
+    %% Entities Layer
+    class User {
+        <<Entity>>
+        -Long id
+        -String fullName
+        -String email
+        -String password
+        -String role
+        -String status
+        -String[] savedRoomIds
+    }
+
+    class Room {
+        <<Entity>>
+        -Long id
+        -String name
+        -String slug
+        -String type
+        -Double pricePerNight
+        -String[] amenities
+        -String[] images
+    }
+
+    class Booking {
+        <<Entity>>
+        -Long id
+        -String bookingReference
+        -Room room
+        -Long userId
+        -String checkIn
+        -String checkOut
+        -Double totalAmount
+        -String status
+    }
+
+    class PromoCode {
+        <<Entity>>
+        -Long id
+        -String code
+        -Double discountValue
+        -Double minSpend
+        -Boolean isActive
+    }
+
+    class Review {
+        <<Entity>>
+        -Long id
+        -String guestName
+        -Double rating
+        -String comment
+        -String status
+    }
+
+    %% Injections & Relationships
+    AuthController --> UserService
+    RoomController --> RoomService
+    BookingController --> BookingService
+    PromoController --> PromoCodeService
+    ReviewController --> ReviewService
+
+    AdminController --> UserRepository
+    AdminController --> RoomRepository
+    AdminController --> BookingRepository
+    AdminController --> ReviewRepository
+
+    UserService --> UserRepository
+    RoomService --> RoomRepository
+    BookingService --> BookingRepository
+    BookingService --> RoomService
+    PromoCodeService --> PromoCodeRepository
+    ReviewService --> ReviewRepository
+
+    Booking --> Room : maps to
+    Booking ..> User : references userId
+`,
+
+      domain: `classDiagram
+    direction TB
+    class User {
+        <<Entity>>
+        -Long id
+        -String fullName
+        -String email
+        -String password
+        -String phone
+        -String nicPassport
+        -String city
+        -String country
+        -String address
+        -String avatarUrl
+        -String preferredCurrency
+        -String role
+        -String status
+        -String[] savedRoomIds
+        -LocalDateTime createdAt
+        -LocalDateTime updatedAt
+        +preUpdate() void
+        +getId() Long
+        +getFullName() String
+        +getEmail() String
+        +getRole() String
+    }
+
+    class Room {
+        <<Entity>>
+        -Long id
+        -String name
+        -String slug
+        -String type
+        -Double pricePerNight
+        -String currency
+        -Double rating
+        -Integer reviewCount
+        -String location
+        -Integer maxGuests
+        -String beds
+        -Integer baths
+        -Integer sizeSqFt
+        -String tag
+        -String description
+        -String detailedDescription
+        -String cancellationPolicy
+        -String bedType
+        -String view
+        -Boolean featured
+        -Boolean popular
+        -String status
+        -String[] amenities
+        -String[] images
+        -LocalDateTime createdAt
+        +getId() Long
+        +getPricePerNight() Double
+    }
+
+    class Booking {
+        <<Entity>>
+        -Long id
+        -String bookingReference
+        -Room room
+        -Long userId
+        -String checkIn
+        -String checkOut
+        -Integer nights
+        -Integer adults
+        -Integer children
+        -Integer totalGuests
+        -String guestFullName
+        -String guestEmail
+        -String guestPhone
+        -String guestNicPassport
+        -String specialRequests
+        -String paymentMethod
+        -Double subtotal
+        -Double serviceCharge
+        -Double taxes
+        -Double discountAmount
+        -String promoCodeApplied
+        -Double totalAmount
+        -String currency
+        -String status
+        -String bookedAt
+        -String cancellationReason
+        -Integer userRating
+        -String userReviewComment
+        -LocalDateTime createdAt
+        +getRoomId() String
+        +getGuestInfo() Map
+    }
+
+    class Review {
+        <<Entity>>
+        -Long id
+        -String guestName
+        -String location
+        -String avatar
+        -Double rating
+        -String comment
+        -String date
+        -String roomBooked
+        -Integer likes
+        -Integer hearts
+        -String status
+        -Boolean isFeatured
+        -LocalDateTime createdAt
+        +getId() Long
+        +getRating() Double
+    }
+
+    class PromoCode {
+        <<Entity>>
+        -Long id
+        -String code
+        -String description
+        -String discountType
+        -Double discountValue
+        -Double minSpend
+        -Boolean isActive
+        +getId() Long
+        +getDiscountValue() Double
+    }
+
+    Booking --> Room : mapped by
+    Booking ..> User : snapshot
+`,
+
+      services: `classDiagram
+    direction TB
+    class UserService {
+        <<Service>>
+        -UserRepository userRepository
+        +authenticate(String email, String password) User
+        +register(RegisterRequest req) User
+        +updateProfile(Long userId, UpdateProfileRequest req) User
+        +toggleSavedRoom(Long userId, String roomId) User
+        +findById(Long id) User
+        +findByEmail(String email) User
+        +save(User user) User
+    }
+
+    class RoomService {
+        <<Service>>
+        -RoomRepository roomRepository
+        +getAllRooms() Room[]
+        +searchRooms(String type, Double minPrice, Double maxPrice, Integer guests) Room[]
+        +getRoomByIdOrSlug(String idOrSlug) Room
+        +saveRoom(Room room) Room
+        +updateRoom(Long id, Room updated) Room
+        +deleteRoom(Long id) void
+    }
+
+    class BookingService {
+        <<Service>>
+        -BookingRepository bookingRepository
+        -RoomService roomService
+        +createBooking(BookingRequest req) Booking
+        +getBookingsByGuest(String email, Long userId) Booking[]
+        +getBookingByReference(String reference) Booking
+        +getBookingById(Long id) Booking
+        +cancelBooking(Long id, String reason) Booking
+        +rateBooking(Long id, Integer rating, String comment) Booking
+        +updateStatus(Long id, String status) Booking
+        +deleteBooking(Long id) void
+    }
+
+    class ReviewService {
+        <<Service>>
+        -ReviewRepository reviewRepository
+        +getAllApprovedReviews() Review[]
+        +createReview(ReviewRequest req) Review
+        +toggleLike(Long reviewId) Review
+        +toggleHeart(Long reviewId) Review
+        +save(Review review) Review
+        +getAllReviews() Review[]
+        +deleteReview(Long reviewId) void
+    }
+
+    class PromoCodeService {
+        <<Service>>
+        -PromoCodeRepository promoCodeRepository
+        +validate(String code, Double subtotal) Map
+        +save(PromoCode promoCode) PromoCode
+        +getAll() PromoCode[]
+        +delete(Long id) void
+    }
+
+    class UserRepository { <<Repository>> }
+    class RoomRepository { <<Repository>> }
+    class BookingRepository { <<Repository>> }
+    class ReviewRepository { <<Repository>> }
+    class PromoCodeRepository { <<Repository>> }
+
+    UserService --> UserRepository : injects
+    RoomService --> RoomRepository : injects
+    BookingService --> BookingRepository : injects
+    BookingService --> RoomService : delegates room lookup
+    ReviewService --> ReviewRepository : injects
+    PromoCodeService --> PromoCodeRepository : injects
+`,
+
+      controllers: `classDiagram
+    direction TB
+    class AuthController {
+        <<RestController>>
+        -UserService userService
+        +login(AuthRequest request) ResponseEntity
+        +register(RegisterRequest request) ResponseEntity
+        +logout(HttpServletResponse response) ResponseEntity
+        +getProfile(Long id, String email) ResponseEntity
+        +updateProfile(Long id, UpdateProfileRequest request) ResponseEntity
+        +toggleSavedRoom(Long id, String roomId) ResponseEntity
+    }
+
+    class RoomController {
+        <<RestController>>
+        -RoomService roomService
+        +getRooms(String type, Double minPrice, Double maxPrice, Integer guests) ResponseEntity
+        +getRoomByIdOrSlug(String idOrSlug) ResponseEntity
+        +createRoom(Room room) ResponseEntity
+        +updateRoom(Long id, Room room) ResponseEntity
+        +deleteRoom(Long id) ResponseEntity
+    }
+
+    class BookingController {
+        <<RestController>>
+        -BookingService bookingService
+        +createBooking(BookingRequest request) ResponseEntity
+        +getBookings(String email, Long userId) ResponseEntity
+        +getBookingByReference(String reference) ResponseEntity
+        +cancelBooking(Long id, CancelBookingRequest request) ResponseEntity
+        +rateBooking(Long id, RateBookingRequest request) ResponseEntity
+        +updateBookingStatus(Long id, Map body) ResponseEntity
+        +deleteBooking(Long id) ResponseEntity
+    }
+
+    class ReviewController {
+        <<RestController>>
+        -ReviewService reviewService
+        +getReviews() ResponseEntity
+        +createReview(ReviewRequest request) ResponseEntity
+        +toggleLike(Long id) ResponseEntity
+        +toggleHeart(Long id) ResponseEntity
+        +deleteReview(Long id) ResponseEntity
+    }
+
+    class PromoController {
+        <<RestController>>
+        -PromoCodeService promoCodeService
+        +validate(PromoValidateRequest request) ResponseEntity
+        +getAllPromos() ResponseEntity
+        +createPromo(PromoCode promoCode) ResponseEntity
+        +deletePromo(Long id) ResponseEntity
+    }
+
+    class AdminController {
+        <<RestController>>
+        -UserRepository userRepository
+        -RoomRepository roomRepository
+        -BookingRepository bookingRepository
+        -ReviewRepository reviewRepository
+        +getStats() ResponseEntity
+        +getAllUsers() ResponseEntity
+        +getAllAdmins() ResponseEntity
+        +createAdmin(Map body) ResponseEntity
+        +updateAdmin(Long id, Map body) ResponseEntity
+        +deleteAdmin(Long id) ResponseEntity
+    }
+
+    class SpaController {
+        <<Controller>>
+        +forwardToIndex() String
+    }
+
+    AuthController --> UserService
+    RoomController --> RoomService
+    BookingController --> BookingService
+    ReviewController --> ReviewService
+    PromoController --> PromoCodeService
+`,
+
+      repositories: `classDiagram
+    direction TB
+    class JpaRepository {
+        <<Interface>>
+        +findAll() Object[]
+        +findById(Long id) Object
+        +save(Object entity) Object
+        +deleteById(Long id) void
+        +count() long
+    }
+
+    class UserRepository {
+        <<Interface>>
+        +findByEmail(String email) User
+        +existsByEmail(String email) boolean
+    }
+
+    class RoomRepository {
+        <<Interface>>
+        +findBySlug(String slug) Room
+        +findByType(String type) Room[]
+        +findByFeaturedTrue() Room[]
+        +searchRooms(String type, Double minPrice, Double maxPrice, Integer guests) Room[]
+    }
+
+    class BookingRepository {
+        <<Interface>>
+        +findByBookingReference(String bookingReference) Booking
+        +findByGuestEmailOrderByCreatedAtDesc(String email) Booking[]
+        +findByUserIdOrderByCreatedAtDesc(Long userId) Booking[]
+        +findAllByOrderByCreatedAtDesc() Booking[]
+    }
+
+    class ReviewRepository {
+        <<Interface>>
+        +findByStatusOrderByCreatedAtDesc(String status) Review[]
+        +findAllByOrderByCreatedAtDesc() Review[]
+    }
+
+    class PromoCodeRepository {
+        <<Interface>>
+        +findByCodeIgnoreCaseAndIsActiveTrue(String code) PromoCode
+    }
+
+    UserRepository --|> JpaRepository : extends
+    RoomRepository --|> JpaRepository : extends
+    BookingRepository --|> JpaRepository : extends
+    ReviewRepository --|> JpaRepository : extends
+    PromoCodeRepository --|> JpaRepository : extends
+`,
+
+      dtos: `classDiagram
+    direction TB
+    class AuthRequest {
+        <<DTO>>
+        -String email
+        -String password
+        +getEmail() String
+        +getPassword() String
+    }
+
+    class RegisterRequest {
+        <<DTO>>
+        -String fullName
+        -String email
+        -String password
+        -String phone
+        -String city
+        -String country
+        +getFullName() String
+        +getEmail() String
+    }
+
+    class UpdateProfileRequest {
+        <<DTO>>
+        -String fullName
+        -String phone
+        -String city
+        -String country
+        -String avatar
+        -String preferredCurrency
+    }
+
+    class BookingRequest {
+        <<DTO>>
+        -String roomId
+        -Long userId
+        -String checkIn
+        -String checkOut
+        -Integer nights
+        -Integer adults
+        -Integer children
+        -GuestInfoDto guestInfo
+        -String paymentMethod
+        -Double subtotal
+        -Double serviceCharge
+        -Double taxes
+        -Double discountAmount
+        -String promoCodeApplied
+        -Double totalAmount
+        -String currency
+    }
+
+    class GuestInfoDto {
+        <<DTO>>
+        -String fullName
+        -String email
+        -String phone
+        -String nicPassport
+        -String specialRequests
+    }
+
+    class CancelBookingRequest {
+        <<DTO>>
+        -String reason
+    }
+
+    class RateBookingRequest {
+        <<DTO>>
+        -Integer rating
+        -String comment
+    }
+
+    class ReviewRequest {
+        <<DTO>>
+        -String guestName
+        -String location
+        -String avatar
+        -Double rating
+        -String comment
+        -String roomBooked
+    }
+
+    class PromoValidateRequest {
+        <<DTO>>
+        -String code
+        -Double subtotal
+    }
+
+    BookingRequest *-- GuestInfoDto : embeds
+`
+    };
+
+    // -------------------------------------------------------------
+    // 2. Complete Class Registry for Search & Inspection (34 Classes)
+    // -------------------------------------------------------------
+    const backendClasses = [
+      // Domain Models
+      {
+        name: "User",
+        type: "Entity",
+        badge: "badge-entity",
+        package: "com.wd32.Hotel_Reservation.model",
+        desc: "JPA entity representing hotel guests, administrators, and staff accounts with credentials, profiles, and saved room wishlists.",
+        table: "users",
+        fields: [
+          { name: "id", type: "Long", notes: "@Id @GeneratedValue(IDENTITY)" },
+          { name: "fullName", type: "String", notes: "@Column(name = 'full_name', length = 150)" },
+          { name: "email", type: "String", notes: "@Column(unique = true, length = 191)" },
+          { name: "password", type: "String", notes: "@Column(name = 'password_hash')" },
+          { name: "phone", type: "String", notes: "@Column(length = 30)" },
+          { name: "nicPassport", type: "String", notes: "@Column(name = 'nic_passport', length = 50)" },
+          { name: "city", type: "String", notes: "@Column(length = 100)" },
+          { name: "country", type: "String", notes: "Default: 'Sri Lanka'" },
+          { name: "address", type: "String", notes: "@Column(columnDefinition = 'TEXT')" },
+          { name: "avatarUrl", type: "String", notes: "@Column(name = 'avatar_url', length = 500)" },
+          { name: "preferredCurrency", type: "String", notes: "Default: 'LKR'" },
+          { name: "role", type: "String", notes: "'guest' | 'admin' | 'super_admin' | 'manager'" },
+          { name: "status", type: "String", notes: "'active' | 'suspended'" },
+          { name: "savedRoomIds", type: "String[]", notes: "@ElementCollection in table user_saved_rooms" },
+          { name: "createdAt", type: "LocalDateTime", notes: "Timestamp" },
+          { name: "updatedAt", type: "LocalDateTime", notes: "Timestamp with @PreUpdate" }
+        ],
+        methods: [
+          { name: "preUpdate()", returns: "void", notes: "Auto sets updatedAt before DB update" },
+          { name: "getSavedRoomIds()", returns: "String[]", notes: "Wishlisted room identifiers" },
+          { name: "getRole()", returns: "String", notes: "Security & permissions role" }
+        ]
+      },
+      {
+        name: "Room",
+        type: "Entity",
+        badge: "badge-entity",
+        package: "com.wd32.Hotel_Reservation.model",
+        desc: "JPA entity representing luxury hotel suites and rooms, complete with night pricing, bedding, occupancy specifications, and photo gallery.",
+        table: "rooms",
+        fields: [
+          { name: "id", type: "Long", notes: "@Id @GeneratedValue(IDENTITY)" },
+          { name: "name", type: "String", notes: "Room title (length 150)" },
+          { name: "slug", type: "String", notes: "Unique URL slug (e.g. deluxe-oceanfront)" },
+          { name: "type", type: "String", notes: "'standard', 'deluxe', 'suite', 'villa'" },
+          { name: "pricePerNight", type: "Double", notes: "LKR rate per night" },
+          { name: "currency", type: "String", notes: "Default: 'LKR'" },
+          { name: "rating", type: "Double", notes: "Guest rating average" },
+          { name: "reviewCount", type: "Integer", notes: "Total reviews count" },
+          { name: "location", type: "String", notes: "Default: 'Bentota Beach, Sri Lanka'" },
+          { name: "maxGuests", type: "Integer", notes: "Max guest capacity" },
+          { name: "beds", type: "String", notes: "e.g. '1 King Bed'" },
+          { name: "baths", type: "Integer", notes: "Number of bathrooms" },
+          { name: "sizeSqFt", type: "Integer", notes: "Square feet dimensions" },
+          { name: "tag", type: "String", notes: "e.g. 'Oceanfront', 'Popular'" },
+          { name: "description", type: "String", notes: "Short promotional summary" },
+          { name: "detailedDescription", type: "String", notes: "Rich long description (LONGTEXT)" },
+          { name: "cancellationPolicy", type: "String", notes: "Free cancellation notice" },
+          { name: "bedType", type: "String", notes: "King / Twin bed type" },
+          { name: "view", type: "String", notes: "Oceanfront / Garden view" },
+          { name: "featured", type: "Boolean", notes: "Flag for homepage spotlight" },
+          { name: "popular", type: "Boolean", notes: "Popular badge flag" },
+          { name: "status", type: "String", notes: "'available' | 'maintenance'" },
+          { name: "amenities", type: "String[]", notes: "@ElementCollection in room_amenity_names" },
+          { name: "images", type: "String[]", notes: "@ElementCollection in room_image_urls" },
+          { name: "createdAt", type: "LocalDateTime", notes: "Created timestamp" }
+        ],
+        methods: [
+          { name: "getAmenities()", returns: "String[]", notes: "Returns all room features" },
+          { name: "getImages()", returns: "String[]", notes: "Returns photo gallery URLs" }
+        ]
+      },
+      {
+        name: "Booking",
+        type: "Entity",
+        badge: "badge-entity",
+        package: "com.wd32.Hotel_Reservation.model",
+        desc: "JPA entity tracking reservations, financial breakdown (subtotal, service charges, taxes, discounts), guest snapshots, and reservation states.",
+        table: "bookings",
+        fields: [
+          { name: "id", type: "Long", notes: "@Id @GeneratedValue(IDENTITY)" },
+          { name: "bookingReference", type: "String", notes: "Unique reference (e.g. SS-LK-59281)" },
+          { name: "room", type: "Room", notes: "@ManyToOne(fetch = EAGER) @JoinColumn(room_id)" },
+          { name: "userId", type: "Long", notes: "Optional registered user ID" },
+          { name: "checkIn", type: "String", notes: "Check-in date (YYYY-MM-DD)" },
+          { name: "checkOut", type: "String", notes: "Check-out date (YYYY-MM-DD)" },
+          { name: "nights", type: "Integer", notes: "Total night count" },
+          { name: "adults", type: "Integer", notes: "Adult count" },
+          { name: "children", type: "Integer", notes: "Children count" },
+          { name: "totalGuests", type: "Integer", notes: "Total heads" },
+          { name: "guestFullName", type: "String", notes: "Guest name snapshot" },
+          { name: "guestEmail", type: "String", notes: "Guest email" },
+          { name: "guestPhone", type: "String", notes: "Guest contact number" },
+          { name: "guestNicPassport", type: "String", notes: "NIC or passport number" },
+          { name: "specialRequests", type: "String", notes: "Custom instructions" },
+          { name: "paymentMethod", type: "String", notes: "'payhere' | 'card' | 'paypal' | 'pay_at_hotel'" },
+          { name: "subtotal", type: "Double", notes: "Room price x nights" },
+          { name: "serviceCharge", type: "Double", notes: "10% service charge" },
+          { name: "taxes", type: "Double", notes: "2.5% local tax" },
+          { name: "discountAmount", type: "Double", notes: "Coupon deduction" },
+          { name: "promoCodeApplied", type: "String", notes: "Promo voucher code" },
+          { name: "totalAmount", type: "Double", notes: "Final bill in LKR" },
+          { name: "status", type: "String", notes: "'confirmed' | 'checked_in' | 'completed' | 'cancelled'" }
+        ],
+        methods: [
+          { name: "getRoomId()", returns: "String", notes: "@JsonProperty serialized roomId" },
+          { name: "getGuestInfo()", returns: "Map", notes: "@JsonProperty synthesized guest profile" }
+        ]
+      },
+      {
+        name: "Review",
+        type: "Entity",
+        badge: "badge-entity",
+        package: "com.wd32.Hotel_Reservation.model",
+        desc: "JPA entity storing client feedback, star ratings, verified stay tags, likes, hearts, and moderation flags.",
+        table: "reviews",
+        fields: [
+          { name: "id", type: "Long", notes: "@Id @GeneratedValue(IDENTITY)" },
+          { name: "guestName", type: "String", notes: "Reviewer full name" },
+          { name: "location", type: "String", notes: "Reviewer city / country" },
+          { name: "avatar", type: "String", notes: "Avatar URL" },
+          { name: "rating", type: "Double", notes: "Score 1.0 to 5.0" },
+          { name: "comment", type: "String", notes: "Review text content" },
+          { name: "roomBooked", type: "String", notes: "Name of room stayed" },
+          { name: "likes", type: "Integer", notes: "Thumbs up counter" },
+          { name: "hearts", type: "Integer", notes: "Love counter" },
+          { name: "status", type: "String", notes: "'approved' | 'pending'" },
+          { name: "isFeatured", type: "Boolean", notes: "Display on landing page" }
+        ],
+        methods: [
+          { name: "getRating()", returns: "Double", notes: "Returns star rating" }
+        ]
+      },
+      {
+        name: "PromoCode",
+        type: "Entity",
+        badge: "badge-entity",
+        package: "com.wd32.Hotel_Reservation.model",
+        desc: "JPA entity configuring marketing discount coupons, minimum spends, and percentage or fixed deductions.",
+        table: "promo_codes",
+        fields: [
+          { name: "id", type: "Long", notes: "@Id @GeneratedValue(IDENTITY)" },
+          { name: "code", type: "String", notes: "Unique voucher string (e.g. SERENE10)" },
+          { name: "description", type: "String", notes: "Voucher explanation" },
+          { name: "discountType", type: "String", notes: "'percentage' | 'fixed'" },
+          { name: "discountValue", type: "Double", notes: "Value e.g. 10.0 for 10%" },
+          { name: "minSpend", type: "Double", notes: "Minimum order threshold" },
+          { name: "isActive", type: "Boolean", notes: "Enable or disable coupon" }
+        ],
+        methods: [
+          { name: "getCode()", returns: "String", notes: "Returns uppercase coupon code" }
+        ]
+      },
+
+      // Services Layer
+      {
+        name: "UserService",
+        type: "Service",
+        badge: "badge-service",
+        package: "com.wd32.Hotel_Reservation.service",
+        desc: "Business logic managing user registration, authentication, profile updates, and saved wishlist collections.",
+        dependencies: ["UserRepository"],
+        fields: [
+          { name: "userRepository", type: "UserRepository", notes: "Injected constructor dependency" }
+        ],
+        methods: [
+          { name: "authenticate(email, password)", returns: "User", notes: "Validates credentials or provisions initial demo user" },
+          { name: "register(RegisterRequest)", returns: "User", notes: "Creates new account after unique email validation" },
+          { name: "updateProfile(id, UpdateProfileRequest)", returns: "User", notes: "Updates personal info and preferences" },
+          { name: "toggleSavedRoom(id, roomId)", returns: "User", notes: "Toggles room in/out of user wishlist" }
+        ]
+      },
+      {
+        name: "RoomService",
+        type: "Service",
+        badge: "badge-service",
+        package: "com.wd32.Hotel_Reservation.service",
+        desc: "Service providing multi-parameter catalog filtering (type, price bounds, guests), ID and slug resolution, and room CRUD operations.",
+        dependencies: ["RoomRepository"],
+        fields: [
+          { name: "roomRepository", type: "RoomRepository", notes: "Injected constructor dependency" }
+        ],
+        methods: [
+          { name: "getAllRooms()", returns: "Room[]", notes: "Retrieves complete catalog" },
+          { name: "searchRooms(type, min, max, guests)", returns: "Room[]", notes: "Applies parameterized JPQL filter" },
+          { name: "getRoomByIdOrSlug(idOrSlug)", returns: "Room", notes: "Resolves numeric ID, slug, or 'room-#' format" },
+          { name: "saveRoom(Room)", returns: "Room", notes: "Persists new room" },
+          { name: "updateRoom(id, updated)", returns: "Room", notes: "Mutates and saves room changes" },
+          { name: "deleteRoom(id)", returns: "void", notes: "Removes room by primary key" }
+        ]
+      },
+      {
+        name: "BookingService",
+        type: "Service",
+        badge: "badge-service",
+        package: "com.wd32.Hotel_Reservation.service",
+        desc: "Core reservation engine: calculates pricing breakdown, validates room inventory, issues unique references (SS-LK-XXXXX), and handles stay lifecycle.",
+        dependencies: ["BookingRepository", "RoomService"],
+        fields: [
+          { name: "bookingRepository", type: "BookingRepository", notes: "Injected data access layer" },
+          { name: "roomService", type: "RoomService", notes: "Injected room lookup service" }
+        ],
+        methods: [
+          { name: "createBooking(BookingRequest)", returns: "Booking", notes: "Generates reference and computes financial breakdown" },
+          { name: "getBookingsByGuest(email, userId)", returns: "Booking[]", notes: "Finds reservations by guest email or ID" },
+          { name: "getBookingByReference(ref)", returns: "Booking", notes: "Lookups booking by voucher code" },
+          { name: "cancelBooking(id, reason)", returns: "Booking", notes: "Sets status to 'cancelled' with audit reason" },
+          { name: "rateBooking(id, rating, comment)", returns: "Booking", notes: "Records guest post-stay evaluation" },
+          { name: "updateStatus(id, status)", returns: "Booking", notes: "Advances status: checked_in, completed, etc." },
+          { name: "deleteBooking(id)", returns: "void", notes: "Removes booking record" }
+        ]
+      },
+      {
+        name: "ReviewService",
+        type: "Service",
+        badge: "badge-service",
+        package: "com.wd32.Hotel_Reservation.service",
+        desc: "Manages guest testimonials, moderation workflows, and interaction reactions (likes & hearts).",
+        dependencies: ["ReviewRepository"],
+        fields: [
+          { name: "reviewRepository", type: "ReviewRepository", notes: "Injected constructor dependency" }
+        ],
+        methods: [
+          { name: "getAllApprovedReviews()", returns: "Review[]", notes: "Returns public approved reviews" },
+          { name: "createReview(ReviewRequest)", returns: "Review", notes: "Persists new guest review" },
+          { name: "toggleLike(reviewId)", returns: "Review", notes: "Increments likes counter" },
+          { name: "toggleHeart(reviewId)", returns: "Review", notes: "Increments hearts counter" },
+          { name: "deleteReview(reviewId)", returns: "void", notes: "Admin moderation delete" }
+        ]
+      },
+      {
+        name: "PromoCodeService",
+        type: "Service",
+        badge: "badge-service",
+        package: "com.wd32.Hotel_Reservation.service",
+        desc: "Validates discount codes, enforces minimum order spend rules, and calculates checkout savings.",
+        dependencies: ["PromoCodeRepository"],
+        fields: [
+          { name: "promoCodeRepository", type: "PromoCodeRepository", notes: "Injected constructor dependency" }
+        ],
+        methods: [
+          { name: "validate(code, subtotal)", returns: "Map", notes: "Validates voucher and returns calculated discount" },
+          { name: "save(PromoCode)", returns: "PromoCode", notes: "Creates/updates promo code" },
+          { name: "getAll()", returns: "PromoCode[]", notes: "Returns all configured codes" },
+          { name: "delete(id)", returns: "void", notes: "Deletes promo coupon" }
+        ]
+      },
+
+      // Repositories Layer
+      {
+        name: "UserRepository",
+        type: "Repository",
+        badge: "badge-repo",
+        package: "com.wd32.Hotel_Reservation.repository",
+        desc: "Spring Data JPA repository interface providing query derivation for user accounts and email uniqueness checks.",
+        dependencies: ["JpaRepository"],
+        fields: [],
+        methods: [
+          { name: "findByEmail(String email)", returns: "User", notes: "Query derived by email" },
+          { name: "existsByEmail(String email)", returns: "boolean", notes: "Checks duplicate email registration" }
+        ]
+      },
+      {
+        name: "RoomRepository",
+        type: "Repository",
+        badge: "badge-repo",
+        package: "com.wd32.Hotel_Reservation.repository",
+        desc: "Spring Data JPA repository interface with custom JPQL query for dynamic multi-attribute room filtering.",
+        dependencies: ["JpaRepository"],
+        fields: [],
+        methods: [
+          { name: "findBySlug(String slug)", returns: "Room", notes: "Finds room by URL slug" },
+          { name: "findByType(String type)", returns: "Room[]", notes: "Filters by category type" },
+          { name: "findByFeaturedTrue()", returns: "Room[]", notes: "Fetches homepage spotlight rooms" },
+          { name: "searchRooms(type, min, max, guests)", returns: "Room[]", notes: "Custom @Query with NULL-safe criteria" }
+        ]
+      },
+      {
+        name: "BookingRepository",
+        type: "Repository",
+        badge: "badge-repo",
+        package: "com.wd32.Hotel_Reservation.repository",
+        desc: "Spring Data JPA repository interface managing persistence, chronology ordering, and reference lookups.",
+        dependencies: ["JpaRepository"],
+        fields: [],
+        methods: [
+          { name: "findByBookingReference(ref)", returns: "Booking", notes: "Lookups reservation by reference voucher" },
+          { name: "findByGuestEmailOrderByCreatedAtDesc(email)", returns: "Booking[]", notes: "Guest history query" },
+          { name: "findByUserIdOrderByCreatedAtDesc(userId)", returns: "Booking[]", notes: "User account reservations" },
+          { name: "findAllByOrderByCreatedAtDesc()", returns: "Booking[]", notes: "Chronological audit list" }
+        ]
+      },
+      {
+        name: "ReviewRepository",
+        type: "Repository",
+        badge: "badge-repo",
+        package: "com.wd32.Hotel_Reservation.repository",
+        desc: "Spring Data JPA repository interface filtering reviews by moderation status.",
+        dependencies: ["JpaRepository"],
+        fields: [],
+        methods: [
+          { name: "findByStatusOrderByCreatedAtDesc(status)", returns: "Review[]", notes: "Retrieves 'approved' reviews ordered chronologically" },
+          { name: "findAllByOrderByCreatedAtDesc()", returns: "Review[]", notes: "All reviews for admin moderation" }
+        ]
+      },
+      {
+        name: "PromoCodeRepository",
+        type: "Repository",
+        badge: "badge-repo",
+        package: "com.wd32.Hotel_Reservation.repository",
+        desc: "Spring Data JPA repository interface lookups active promotion codes case-insensitively.",
+        dependencies: ["JpaRepository"],
+        fields: [],
+        methods: [
+          { name: "findByCodeIgnoreCaseAndIsActiveTrue(code)", returns: "PromoCode", notes: "Case-insensitive active voucher lookup" }
+        ]
+      },
+
+      // Controllers Layer
+      {
+        name: "AdminController",
+        type: "Controller",
+        badge: "badge-controller",
+        package: "com.wd32.Hotel_Reservation.controller",
+        desc: "Dedicated administrative controller providing business KPIs, customer directories, and administrator access control (add/remove admins).",
+        dependencies: ["UserRepository", "RoomRepository", "BookingRepository", "ReviewRepository"],
+        fields: [
+          { name: "userRepository", type: "UserRepository", notes: "Direct data access" },
+          { name: "roomRepository", type: "RoomRepository", notes: "Direct data access" },
+          { name: "bookingRepository", type: "BookingRepository", notes: "Direct data access" },
+          { name: "reviewRepository", type: "ReviewRepository", notes: "Direct data access" }
+        ],
+        methods: [
+          { name: "getStats()", returns: "GET /api/admin/stats", notes: "Returns Revenue, Bookings, Occupancy, Staff counts" },
+          { name: "getAllUsers()", returns: "GET /api/admin/users", notes: "Returns all customer profiles & activity" },
+          { name: "getAllAdmins()", returns: "GET /api/admin/admins", notes: "Returns admin & manager accounts" },
+          { name: "createAdmin(body)", returns: "POST /api/admin/admins", notes: "Provisions new administrator account" },
+          { name: "updateAdmin(id, body)", returns: "PUT /api/admin/admins/{id}", notes: "Updates role/details" },
+          { name: "deleteAdmin(id)", returns: "DELETE /api/admin/admins/{id}", notes: "Removes admin with Super Admin safeguard" }
+        ]
+      },
+      {
+        name: "AuthController",
+        type: "Controller",
+        badge: "badge-controller",
+        package: "com.wd32.Hotel_Reservation.controller",
+        desc: "REST controller managing customer sign in, user registration, profile lookup, and wishlist modification.",
+        dependencies: ["UserService"],
+        fields: [
+          { name: "userService", type: "UserService", notes: "Injected business service" }
+        ],
+        methods: [
+          { name: "login(AuthRequest)", returns: "POST /api/auth/login", notes: "Authenticates email and password" },
+          { name: "register(RegisterRequest)", returns: "POST /api/auth/register", notes: "Registers new account" },
+          { name: "getProfile(id, email)", returns: "GET /api/auth/profile", notes: "Fetches user profile" },
+          { name: "updateProfile(id, UpdateProfileRequest)", returns: "PUT /api/auth/profile/{id}", notes: "Updates user record" },
+          { name: "toggleSavedRoom(id, roomId)", returns: "POST /api/auth/profile/{id}/save-room/{roomId}", notes: "Wishlist toggle" },
+          { name: "logout(HttpServletResponse)", returns: "POST /api/auth/logout", notes: "Expires session cookies" }
+        ]
+      },
+      {
+        name: "RoomController",
+        type: "Controller",
+        badge: "badge-controller",
+        package: "com.wd32.Hotel_Reservation.controller",
+        desc: "REST controller serving room search requests and room catalog mutations.",
+        dependencies: ["RoomService"],
+        fields: [
+          { name: "roomService", type: "RoomService", notes: "Injected room service" }
+        ],
+        methods: [
+          { name: "getRooms(type, min, max, guests)", returns: "GET /api/rooms", notes: "Parameterized search & filter" },
+          { name: "getRoomByIdOrSlug(idOrSlug)", returns: "GET /api/rooms/{idOrSlug}", notes: "Detailed room overview" },
+          { name: "createRoom(Room)", returns: "POST /api/rooms", notes: "Adds new room to catalog" },
+          { name: "updateRoom(id, Room)", returns: "PUT /api/rooms/{id}", notes: "Modifies existing room" },
+          { name: "deleteRoom(id)", returns: "DELETE /api/rooms/{id}", notes: "Removes room from system" }
+        ]
+      },
+      {
+        name: "BookingController",
+        type: "Controller",
+        badge: "badge-controller",
+        package: "com.wd32.Hotel_Reservation.controller",
+        desc: "REST controller handling reservations, voucher lookups, cancellations, and ratings.",
+        dependencies: ["BookingService"],
+        fields: [
+          { name: "bookingService", type: "BookingService", notes: "Injected booking service" }
+        ],
+        methods: [
+          { name: "createBooking(BookingRequest)", returns: "POST /api/bookings", notes: "Creates stay reservation" },
+          { name: "getBookings(email, userId)", returns: "GET /api/bookings", notes: "Retrieves guest bookings" },
+          { name: "getBookingByReference(reference)", returns: "GET /api/bookings/{reference}", notes: "Voucher details lookup" },
+          { name: "cancelBooking(id, CancelBookingRequest)", returns: "PUT /api/bookings/{id}/cancel", notes: "Cancels booking" },
+          { name: "rateBooking(id, RateBookingRequest)", returns: "POST /api/bookings/{id}/rate", notes: "Submits post-stay rating" },
+          { name: "updateBookingStatus(id, body)", returns: "PUT /api/bookings/{id}/status", notes: "Admin status changer" },
+          { name: "deleteBooking(id)", returns: "DELETE /api/bookings/{id}", notes: "Deletes booking record" }
+        ]
+      },
+      {
+        name: "ReviewController",
+        type: "Controller",
+        badge: "badge-controller",
+        package: "com.wd32.Hotel_Reservation.controller",
+        desc: "REST controller exposing testimonials, creation endpoints, and like/heart reactions.",
+        dependencies: ["ReviewService"],
+        fields: [
+          { name: "reviewService", type: "ReviewService", notes: "Injected review service" }
+        ],
+        methods: [
+          { name: "getReviews()", returns: "GET /api/reviews", notes: "Fetches approved reviews" },
+          { name: "createReview(ReviewRequest)", returns: "POST /api/reviews", notes: "Submits new guest review" },
+          { name: "toggleLike(id)", returns: "POST /api/reviews/{id}/like", notes: "Increments likes" },
+          { name: "toggleHeart(id)", returns: "POST /api/reviews/{id}/heart", notes: "Increments hearts" },
+          { name: "deleteReview(id)", returns: "DELETE /api/reviews/{id}", notes: "Moderation delete" }
+        ]
+      },
+      {
+        name: "PromoController",
+        type: "Controller",
+        badge: "badge-controller",
+        package: "com.wd32.Hotel_Reservation.controller",
+        desc: "REST controller handling voucher validation and administrative coupon management.",
+        dependencies: ["PromoCodeService"],
+        fields: [
+          { name: "promoCodeService", type: "PromoCodeService", notes: "Injected promo service" }
+        ],
+        methods: [
+          { name: "validate(PromoValidateRequest)", returns: "POST /api/promos/validate", notes: "Validates coupon against subtotal" },
+          { name: "getAllPromos()", returns: "GET /api/promos", notes: "Fetches all promo coupons" },
+          { name: "createPromo(PromoCode)", returns: "POST /api/promos", notes: "Creates new discount code" },
+          { name: "deletePromo(id)", returns: "DELETE /api/promos/{id}", notes: "Deletes coupon" }
+        ]
+      },
+      {
+        name: "SpaController",
+        type: "Controller",
+        badge: "badge-controller",
+        package: "com.wd32.Hotel_Reservation",
+        desc: "Spring MVC Controller forwarding client-side browser routes (/rooms, /admin, /checkout, etc.) to index.html without circular loops.",
+        dependencies: [],
+        fields: [],
+        methods: [
+          { name: "forwardToIndex()", returns: "GET /rooms, /admin, ...", notes: "Returns 'forward:/index.html'" }
+        ]
+      },
+
+      // DTOs
+      {
+        name: "BookingRequest",
+        type: "DTO",
+        badge: "badge-dto",
+        package: "com.wd32.Hotel_Reservation.dto",
+        desc: "Primary payload received during checkout containing room selection, dates, financial breakdown, and guest info.",
+        fields: [
+          { name: "roomId", type: "String", notes: "ID or slug of selected room" },
+          { name: "userId", type: "Long", notes: "Optional account user ID" },
+          { name: "checkIn", type: "String", notes: "Arrival date (YYYY-MM-DD)" },
+          { name: "checkOut", type: "String", notes: "Departure date (YYYY-MM-DD)" },
+          { name: "nights", type: "Integer", notes: "Night duration" },
+          { name: "adults", type: "Integer", notes: "Adult occupants" },
+          { name: "children", type: "Integer", notes: "Child occupants" },
+          { name: "guestInfo", type: "GuestInfoDto", notes: "Embedded guest details snapshot" },
+          { name: "paymentMethod", type: "String", notes: "Payment gateway type" },
+          { name: "subtotal", type: "Double", notes: "Room charge" },
+          { name: "serviceCharge", type: "Double", notes: "Service surcharge" },
+          { name: "taxes", type: "Double", notes: "Government taxes" },
+          { name: "discountAmount", type: "Double", notes: "Coupon reduction" },
+          { name: "promoCodeApplied", type: "String", notes: "Voucher code" },
+          { name: "totalAmount", type: "Double", notes: "Grand total" },
+          { name: "currency", type: "String", notes: "Currency code" }
+        ]
+      },
+      {
+        name: "GuestInfoDto",
+        type: "DTO",
+        badge: "badge-dto",
+        package: "com.wd32.Hotel_Reservation.dto",
+        desc: "Nested guest data transfer object capturing personal contact information and special stay requests.",
+        fields: [
+          { name: "fullName", type: "String", notes: "Guest name" },
+          { name: "email", type: "String", notes: "Confirmation email" },
+          { name: "phone", type: "String", notes: "Contact telephone" },
+          { name: "nicPassport", type: "String", notes: "National ID or Passport" },
+          { name: "specialRequests", type: "String", notes: "High floor, late arrival, etc." }
+        ]
+      },
+      {
+        name: "AuthRequest",
+        type: "DTO",
+        badge: "badge-dto",
+        package: "com.wd32.Hotel_Reservation.dto",
+        desc: "Payload containing email and password credentials for customer and administrator login.",
+        fields: [
+          { name: "email", type: "String", notes: "User email address" },
+          { name: "password", type: "String", notes: "Plain-text password to verify" }
+        ]
+      },
+      {
+        name: "RegisterRequest",
+        type: "DTO",
+        badge: "badge-dto",
+        package: "com.wd32.Hotel_Reservation.dto",
+        desc: "Payload submitted by guests when creating a new personal reservation account.",
+        fields: [
+          { name: "fullName", type: "String", notes: "Full name" },
+          { name: "email", type: "String", notes: "Email address" },
+          { name: "password", type: "String", notes: "Chosen password" },
+          { name: "phone", type: "String", notes: "Contact phone" },
+          { name: "city", type: "String", notes: "City of residence" },
+          { name: "country", type: "String", notes: "Country" }
+        ]
+      },
+      {
+        name: "UpdateProfileRequest",
+        type: "DTO",
+        badge: "badge-dto",
+        package: "com.wd32.Hotel_Reservation.dto",
+        desc: "Payload submitted when updating personal contact info, profile picture, or preferred currency.",
+        fields: [
+          { name: "fullName", type: "String", notes: "Updated full name" },
+          { name: "phone", type: "String", notes: "Updated phone" },
+          { name: "city", type: "String", notes: "Updated city" },
+          { name: "country", type: "String", notes: "Updated country" },
+          { name: "avatar", type: "String", notes: "Updated avatar image URL" },
+          { name: "preferredCurrency", type: "String", notes: "Preferred currency (LKR, USD, EUR)" }
+        ]
+      },
+      {
+        name: "CancelBookingRequest",
+        type: "DTO",
+        badge: "badge-dto",
+        package: "com.wd32.Hotel_Reservation.dto",
+        desc: "Payload supplying the cancellation reason when voiding an existing reservation.",
+        fields: [
+          { name: "reason", type: "String", notes: "Cancellation explanation" }
+        ]
+      },
+      {
+        name: "RateBookingRequest",
+        type: "DTO",
+        badge: "badge-dto",
+        package: "com.wd32.Hotel_Reservation.dto",
+        desc: "Payload used to submit post-stay ratings and testimonials for a specific booking.",
+        fields: [
+          { name: "rating", type: "Integer", notes: "Star score (1 - 5)" },
+          { name: "comment", type: "String", notes: "Optional review comment" }
+        ]
+      },
+      {
+        name: "ReviewRequest",
+        type: "DTO",
+        badge: "badge-dto",
+        package: "com.wd32.Hotel_Reservation.dto",
+        desc: "Payload for public feedback submission containing guest details, rating, and feedback text.",
+        fields: [
+          { name: "guestName", type: "String", notes: "Reviewer name" },
+          { name: "location", type: "String", notes: "City / Country" },
+          { name: "avatar", type: "String", notes: "Optional avatar URL" },
+          { name: "rating", type: "Double", notes: "Star rating" },
+          { name: "comment", type: "String", notes: "Testimonial commentary" },
+          { name: "roomBooked", type: "String", notes: "Room stayed in" }
+        ]
+      },
+      {
+        name: "PromoValidateRequest",
+        type: "DTO",
+        badge: "badge-dto",
+        package: "com.wd32.Hotel_Reservation.dto",
+        desc: "Payload sent from checkout to evaluate coupon validity against the cart subtotal.",
+        fields: [
+          { name: "code", type: "String", notes: "Promo coupon code" },
+          { name: "subtotal", type: "Double", notes: "Current bill subtotal in LKR" }
+        ]
+      }
+    ];
+
+    // -------------------------------------------------------------
+    // 3. UI State & Diagram Rendering
+    // -------------------------------------------------------------
+    let currentView = 'full';
+    let panZoomInstance = null;
+
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: 'dark',
+      themeVariables: {
+        darkMode: true,
+        background: '#0d121f',
+        primaryColor: '#1e293b',
+        primaryTextColor: '#f8fafc',
+        primaryBorderColor: '#c5a880',
+        lineColor: '#64748b',
+        secondaryColor: '#334155',
+        tertiaryColor: '#0f172a',
+        fontFamily: 'JetBrains Mono, monospace',
+        fontSize: '13px'
+      }
+      // defaultRenderer: 'dagre' has been removed to allow Mermaid to auto-select 
+      // the safest, most modern parser for the active version.
+    });
+
+    async function renderDiagram(viewKey) {
+      const target = document.getElementById('mermaidTarget');
+      const source = diagramSources[viewKey] || diagramSources.full;
+
+      if (panZoomInstance) {
+        panZoomInstance.destroy();
+        panZoomInstance = null;
+      }
+
+      target.innerHTML = '';
+      target.removeAttribute('data-processed');
+
+      try {
+        // We omit 'target' container to let Mermaid safely sandbox generation inside document.body
+        const { svg } = await mermaid.render('mermaid-svg-' + Date.now(), source);
+        target.innerHTML = svg;
+
+        const svgElement = target.querySelector('svg');
+        if (svgElement) {
+          svgElement.style.width = '100%';
+          svgElement.style.height = '100%';
+          svgElement.style.cursor = 'grab';
+
+          // Initialize svg-pan-zoom
+          panZoomInstance = svgPanZoom(svgElement, {
+            zoomEnabled: true,
+            controlIconsEnabled: false,
+            fit: true,
+            center: true,
+            minZoom: 0.2,
+            maxZoom: 8,
+            zoomScaleSensitivity: 0.25,
+            dblClickZoomEnabled: true
+          });
+        }
+      } catch (err) {
+        console.error("Mermaid Render Error:", err);
+        target.innerHTML = '<div style="padding: 40px; color: #ef4444; font-family: monospace;">Failed to render diagram: ' + err.message + '</div>';
+      }
+    }
+
+    function switchView(viewKey, btn) {
+      currentView = viewKey;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+
+      const labels = {
+        full: 'Full Architecture Blueprint',
+        domain: 'Domain Entities & JPA Mappings',
+        services: 'Services & Business Logic Layer',
+        controllers: 'REST API Controllers Layer',
+        repositories: 'Spring Data Repositories',
+        dtos: 'Data Transfer Objects (DTOs)'
+      };
+      document.getElementById('currentViewLabel').textContent = labels[viewKey] || 'Architecture Blueprint';
+      renderDiagram(viewKey);
+    }
+
+    function zoomIn() { if (panZoomInstance) panZoomInstance.zoomIn(); }
+    function zoomOut() { if (panZoomInstance) panZoomInstance.zoomOut(); }
+    function resetZoom() { if (panZoomInstance) { panZoomInstance.reset(); panZoomInstance.center(); } }
+    function fitView() { if (panZoomInstance) { panZoomInstance.fit(); panZoomInstance.center(); } }
+
+    function exportSvg() {
+      const svg = document.querySelector('#mermaidTarget svg');
+      if (!svg) return alert("Diagram is not loaded yet.");
+      const svgData = new XMLSerializer().serializeToString(svg);
+      const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `serenestay-${currentView}-class-diagram.svg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function toggleTheme() {
+      const isLight = document.body.getAttribute('data-theme') === 'light';
+      if (isLight) {
+        document.body.removeAttribute('data-theme');
+        document.getElementById('themeIcon').textContent = '☀️';
+        document.getElementById('themeToggleBtn').innerHTML = '<span id="themeIcon">☀️</span> Light Mode';
+      } else {
+        document.body.setAttribute('data-theme', 'light');
+        document.getElementById('themeIcon').textContent = '🌙';
+        document.getElementById('themeToggleBtn').innerHTML = '<span id="themeIcon">🌙</span> Dark Mode';
+      }
+      renderDiagram(currentView);
+    }
+
+    function scrollToCatalog() {
+      document.getElementById('catalogSection').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // -------------------------------------------------------------
+    // 4. Populate Class Catalog Cards
+    // -------------------------------------------------------------
+    function populateCatalog(list = backendClasses) {
+      const container = document.getElementById('classesGrid');
+      container.innerHTML = list.map((cls, idx) => `
+        <div class="class-card" onclick="openClassModal('${cls.name}')">
+          <div class="card-top">
+            <div>
+              <div class="card-title">${cls.name}</div>
+              <div class="card-pkg">${cls.package}</div>
+            </div>
+            <span class="badge-pill ${cls.badge}">${cls.type}</span>
+          </div>
+          <p class="card-desc">${cls.desc}</p>
+          <div class="card-stats-row">
+            <div class="card-stat-item"><strong>${cls.fields ? cls.fields.length : 0}</strong> Fields</div>
+            <div class="card-stat-item"><strong>${cls.methods ? cls.methods.length : 0}</strong> Methods</div>
+            ${cls.table ? `<div class="card-stat-item">Table: <strong>${cls.table}</strong></div>` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function filterClasses() {
+      const query = document.getElementById('classSearch').value.toLowerCase().trim();
+      const filtered = backendClasses.filter(c => 
+        c.name.toLowerCase().includes(query) ||
+        c.type.toLowerCase().includes(query) ||
+        c.package.toLowerCase().includes(query) ||
+        c.desc.toLowerCase().includes(query)
+      );
+      populateCatalog(filtered);
+    }
+
+    // -------------------------------------------------------------
+    // 5. Inspector Modal Logic
+    // -------------------------------------------------------------
+    function openClassModal(className) {
+      const cls = backendClasses.find(c => c.name === className);
+      if (!cls) return;
+
+      document.getElementById('modalTitle').textContent = cls.name;
+      document.getElementById('modalPackage').textContent = cls.package;
+      const stEl = document.getElementById('modalStereotype');
+      stEl.className = 'badge-pill ' + cls.badge;
+      stEl.textContent = cls.type.toUpperCase();
+
+      let bodyHtml = `<p style="font-size: 14px; color: var(--text-muted); margin-bottom: 24px;">${cls.desc}</p>`;
+
+      if (cls.table) {
+        bodyHtml += `
+          <div style="background: rgba(197, 168, 128, 0.1); border: 1px solid var(--border-accent); padding: 10px 14px; border-radius: 10px; margin-bottom: 24px; font-size: 13px; font-family: 'JetBrains Mono', monospace;">
+            <strong>Database Table:</strong> <span style="color: var(--gold-primary); font-weight: 700;">${cls.table}</span>
+          </div>
+        `;
+      }
+
+      if (cls.dependencies && cls.dependencies.length > 0) {
+        bodyHtml += `
+          <div class="section-title">Injected Dependencies / Inheritance</div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px;">
+            ${cls.dependencies.map(d => `<span style="font-size: 12px; font-family: 'JetBrains Mono', monospace; background: var(--bg-card); padding: 4px 10px; border-radius: 6px; border: 1px solid var(--border-color); color: var(--accent-blue);">${d}</span>`).join('')}
+          </div>
+        `;
+      }
+
+      if (cls.fields && cls.fields.length > 0) {
+        bodyHtml += `
+          <div class="section-title">Class Attributes / Fields (${cls.fields.length})</div>
+          <table class="item-table">
+            <thead>
+              <tr>
+                <th>Modifier & Type</th>
+                <th>Field Name</th>
+                <th>JPA / Constraint Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${cls.fields.map(f => `
+                <tr>
+                  <td style="color: var(--accent-blue);">${f.type}</td>
+                  <td style="color: var(--text-main); font-weight: 600;">${f.name}</td>
+                  <td style="color: var(--text-muted); font-size: 11px;">${f.notes || '-'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      }
+
+      if (cls.methods && cls.methods.length > 0) {
+        bodyHtml += `
+          <div class="section-title">Operations & Endpoints (${cls.methods.length})</div>
+          <table class="item-table">
+            <thead>
+              <tr>
+                <th>Method Signature</th>
+                <th>Return Type / Mapping</th>
+                <th>Behavior</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${cls.methods.map(m => `
+                <tr>
+                  <td style="color: var(--gold-primary); font-weight: 600;">${m.name}</td>
+                  <td style="color: var(--accent-purple);">${m.returns}</td>
+                  <td style="color: var(--text-muted); font-size: 11px;">${m.notes || '-'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      }
+
+      document.getElementById('modalBody').innerHTML = bodyHtml;
+      document.getElementById('inspectorModal').classList.add('open');
+    }
+
+    function closeModal() {
+      document.getElementById('inspectorModal').classList.remove('open');
+    }
+
+    function closeModalOnBackdrop(e) {
+      if (e.target.id === 'inspectorModal') closeModal();
+    }
+
+    // Escape key closes modal
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeModal();
+    });
+
+    // -------------------------------------------------------------
+    // 6. Bootstrap on Page Load
+    // -------------------------------------------------------------
+    window.addEventListener('DOMContentLoaded', () => {
+      renderDiagram('full');
+      populateCatalog();
+    });
+  </script>
+</body>
+</html>
