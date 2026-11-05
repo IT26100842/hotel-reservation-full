@@ -377,8 +377,7 @@ function AppContent() {
     <div className="min-h-screen flex flex-col bg-[#FBFBF9] dark:bg-[#0A1210] text-[#1A1F1D] dark:text-[#EDEDEB] transition-colors duration-300 overflow-x-hidden mainClass">
       {/* Top Animated Scroll Progress Bar Tracking Scroll Depth */}
       <ScrollProgressBar />
-      <CustomCursor/>
-      
+      {/*<CustomCursor/>*/}
       {/* 1. Smart Initial Preloader */}
       {initialLoading && (
         <SmartPreloader onComplete={() => setInitialLoading(false)} />

@@ -1,0 +1,461 @@
+@startuml
+skinparam linetype ortho
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam packageStyle rectangle
+skinparam nodesep 60
+skinparam ranksep 80
+
+skinparam defaultFontName "Segoe UI", "Inter", sans-serif
+skinparam defaultFontSize 12
+
+' Color palette - Modern Dark Theme
+skinparam backgroundColor #0b1120
+skinparam packageBorderColor #334155
+skinparam packageFontColor #94a3b8
+skinparam packageFontSize 14
+skinparam packageFontStyle bold
+
+skinparam class {
+    BackgroundColor #1e293b
+    BorderColor #475569
+    FontColor #f8fafc
+    FontSize 13
+    FontStyle bold
+    AttributeFontColor #cbd5e1
+    AttributeFontSize 11
+    StereotypeFontColor #38bdf8
+    StereotypeFontSize 11
+    ArrowColor #38bdf8
+    ArrowThickness 1.8
+}
+
+package "Domain Model Layer (JPA Entities)" #111c35 {
+    abstract class BaseEntity <<MappedSuperclass>> #172554 {
+        - id : Long
+        - createdAt : LocalDateTime
+        + {abstract} validate() : void
+        + getId() : Long
+        + setId(id: Long) : void
+        + getCreatedAt() : LocalDateTime
+        + setCreatedAt(date: LocalDateTime) : void
+    }
+
+    class User <<Entity>> #1e293b {
+        - fullName : String
+        - email : String
+        - password : String
+        - phone : String
+        - nicPassport : String
+        - city : String
+        - country : String
+        - address : String
+        - avatarUrl : String
+        - preferredCurrency : String
+        - role : String
+        - status : String
+        - savedRoomIds : List<String>
+        - updatedAt : LocalDateTime
+        + validate() : void
+        + hasAdminRole() : boolean
+        + toggleSavedRoom(roomId: String) : void
+        + preUpdate() : void
+        + getFullName() : String
+        + getEmail() : String
+        + getRole() : String
+    }
+
+    class Room <<Entity>> #1e293b {
+        - name : String
+        - slug : String
+        - type : String
+        - pricePerNight : Double
+        - currency : String
+        - rating : Double
+        - reviewCount : Integer
+        - location : String
+        - maxGuests : Integer
+        - beds : String
+        - baths : Integer
+        - sizeSqFt : Integer
+        - tag : String
+        - description : String
+        - detailedDescription : String
+        - cancellationPolicy : String
+        - bedType : String
+        - view : String
+        - featured : Boolean
+        - popular : Boolean
+        - status : String
+        - totalRooms : Integer
+        - baseRoomNumber : Integer
+        - occupiedRooms : Integer
+        - availableRooms : Integer
+        - roomNumbers : List<String>
+        - occupiedRoomNumbers : List<String>
+        - availableRoomNumbers : List<String>
+        - amenities : List<String>
+        - images : List<String>
+        + validate() : void
+        + updateFrom(updated: Room) : void
+        + updateAvailability(roomBookings: List<Booking>) : void
+        + getAvailableRoomNumbers() : List<String>
+    }
+
+    class Booking <<Entity>> #1e293b {
+        - bookingReference : String
+        - room : Room
+        - roomNumber : String
+        - userId : Long
+        - checkIn : String
+        - checkOut : String
+        - nights : Integer
+        - adults : Integer
+        - children : Integer
+        - totalGuests : Integer
+        - guestFullName : String
+        - guestEmail : String
+        - guestPhone : String
+        - guestNicPassport : String
+        - specialRequests : String
+        - paymentMethod : String
+        - subtotal : Double
+        - serviceCharge : Double
+        - taxes : Double
+        - discountAmount : Double
+        - promoCodeApplied : String
+        - totalAmount : Double
+        - currency : String
+        - status : String
+        - bookedAt : String
+        - cancellationReason : String
+        - userRating : Integer
+        - userReviewComment : String
+        + validate() : void
+        + hasActiveOccupation() : boolean
+        + calculateFinancials(subtotal, sCharge, tax, disc, total) : void
+        + cancel(reason: String) : void
+        + applyRating(rating: Integer, comment: String) : void
+        + getGuestInfo() : Map<String, String>
+    }
+
+    class PromoCode <<Entity>> #1e293b {
+        - code : String
+        - description : String
+        - discountType : String
+        - discountValue : Double
+        - minSpend : Double
+        - isActive : Boolean
+        + validate() : void
+        + calculateDiscount(subtotal: Double) : double
+        + getCode() : String
+        + getDiscountValue() : Double
+    }
+
+    class Review <<Entity>> #1e293b {
+        - guestName : String
+        - location : String
+        - avatar : String
+        - rating : Double
+        - comment : String
+        - date : String
+        - roomBooked : String
+        - likes : Integer
+        - hearts : Integer
+        - status : String
+        - isFeatured : Boolean
+        + validate() : void
+        + adjustLikes(increment: boolean) : void
+        + adjustHearts(increment: boolean) : void
+    }
+
+    ' Model Inheritance
+    BaseEntity <|-- User
+    BaseEntity <|-- Room
+    BaseEntity <|-- Booking
+    BaseEntity <|-- PromoCode
+    BaseEntity <|-- Review
+
+    ' Relationships
+    Booking "0..*" o-- "1" Room : room >
+    User "1" --> "0..*" Booking : placed by >
+    Booking "0..*" ..> "0..1" PromoCode : applies >
+}
+
+package "Repository Layer (Spring Data JPA)" #1c1917 {
+    interface JpaRepository<T, ID> <<Framework Interface>> #451a03 {
+        + findAll() : List<T>
+        + findById(id: ID) : Optional<T>
+        + save(entity: T) : T
+        + deleteById(id: ID) : void
+        + count() : long
+    }
+
+    interface UserRepository <<Repository>> #292524 {
+        + findByEmail(email: String) : Optional<User>
+        + existsByEmail(email: String) : boolean
+    }
+
+    interface RoomRepository <<Repository>> #292524 {
+        + findBySlug(slug: String) : Optional<Room>
+        + findByType(type: String) : List<Room>
+        + findByFeaturedTrue() : List<Room>
+        + searchRooms(type, minPrice, maxPrice, guests) : List<Room>
+    }
+
+    interface BookingRepository <<Repository>> #292524 {
+        + findByBookingReference(ref: String) : Optional<Booking>
+        + findByGuestEmailOrderByCreatedAtDesc(email: String) : List<Booking>
+        + findByUserIdOrderByCreatedAtDesc(userId: Long) : List<Booking>
+        + findAllByOrderByCreatedAtDesc() : List<Booking>
+        + findByRoomId(roomId: Long) : List<Booking>
+    }
+
+    interface PromoCodeRepository <<Repository>> #292524 {
+        + findByCodeIgnoreCaseAndIsActiveTrue(code: String) : Optional<PromoCode>
+    }
+
+    interface ReviewRepository <<Repository>> #292524 {
+        + findByStatusOrderByCreatedAtDesc(status: String) : List<Review>
+        + findAllByOrderByCreatedAtDesc() : List<Review>
+    }
+
+    JpaRepository <|.. UserRepository
+    JpaRepository <|.. RoomRepository
+    JpaRepository <|.. BookingRepository
+    JpaRepository <|.. PromoCodeRepository
+    JpaRepository <|.. ReviewRepository
+
+    UserRepository ..> User : manages
+    RoomRepository ..> Room : manages
+    BookingRepository ..> Booking : manages
+    PromoCodeRepository ..> PromoCode : manages
+    ReviewRepository ..> Review : manages
+}
+
+package "Business Service Layer" #064e3b {
+    abstract class BaseService<T extends BaseEntity> <<Service>> #022c22 {
+        # repository : JpaRepository<T, Long>
+        # BaseService(repository: JpaRepository)
+        + getAll() : List<T>
+        + findById(id: Long) : Optional<T>
+        + getById(id: Long) : T
+        + save(entity: T) : T
+        + delete(id: Long) : void
+    }
+
+    class UserService <<Service>> #1e293b {
+        - userRepository : UserRepository
+        - httpClient : HttpClient
+        - imgbbApiKey : String
+        + {static} hashPassword(plain: String) : String
+        + {static} verifyPassword(input: String, stored: String) : boolean
+        + authenticate(email: String, pass: String) : User
+        + register(req: RegisterRequest) : User
+        + updateProfile(userId: Long, req: UpdateProfileRequest) : User
+        + changePassword(userId: Long, currentPass, newPass) : User
+        + uploadAndSaveAvatar(userId: Long, b64Image: String) : User
+        + toggleSavedRoom(userId: Long, roomId: String) : User
+        + getAdmins() : List<User>
+        + createAdmin(body: Map) : User
+        + updateAdmin(id: Long, body: Map) : User
+        + deleteAdmin(id: Long) : void
+    }
+
+    class RoomService <<Service>> #1e293b {
+        - roomRepository : RoomRepository
+        - bookingRepository : BookingRepository
+        + searchRooms(type, minPrice, maxPrice, guests) : List<Room>
+        + getRoomByIdOrSlug(idOrSlug: String) : Optional<Room>
+        + save(room: Room) : Room
+        + updateRoom(id: Long, updated: Room) : Room
+        + enrichSingleRoom(room: Room) : Room
+        + enrichRooms(rooms: List<Room>) : List<Room>
+    }
+
+    class BookingService <<Service>> #1e293b {
+        - bookingRepository : BookingRepository
+        - roomService : RoomService
+        + createBooking(req: BookingRequest) : Booking
+        + getBookingsByGuest(email: String, userId: Long) : List<Booking>
+        + getBookingByReference(reference: String) : Optional<Booking>
+        + cancelBooking(id: Long, reason: String) : Booking
+        + rateBooking(id: Long, rating: Integer, comment: String) : Booking
+        + updateStatus(id: Long, status: String) : Booking
+    }
+
+    class PromoCodeService <<Service>> #1e293b {
+        - promoCodeRepository : PromoCodeRepository
+        + validate(code: String, subtotal: Double) : Map<String, Object>
+    }
+
+    class ReviewService <<Service>> #1e293b {
+        - reviewRepository : ReviewRepository
+        + getAllApprovedReviews() : List<Review>
+        + createReview(req: ReviewRequest) : Review
+        + toggleLike(reviewId: Long, increment: boolean) : Review
+        + toggleHeart(reviewId: Long, increment: boolean) : Review
+    }
+
+    BaseService <|-- UserService
+    BaseService <|-- RoomService
+    BaseService <|-- BookingService
+    BaseService <|-- PromoCodeService
+    BaseService <|-- ReviewService
+
+    BaseService o-- JpaRepository : delegates
+    UserService o-- UserRepository : injects
+    RoomService o-- RoomRepository : injects
+    RoomService o-- BookingRepository : checks availability
+    BookingService o-- BookingRepository : injects
+    BookingService o-- RoomService : checks inventory
+    PromoCodeService o-- PromoCodeRepository : injects
+    ReviewService o-- ReviewRepository : injects
+}
+
+package "REST Controller Layer" #3b0764 {
+    abstract class BaseController <<Controller>> #581c87 {
+        + handleBadRequest(e: IllegalArgumentException) : ResponseEntity
+        + handleServerError(e: Exception) : ResponseEntity
+        # parseId(rawId: String) : Long
+    }
+
+    class AuthController <<RestController>> #1e293b {
+        - userService : UserService
+        + login(req: AuthRequest, res) : ResponseEntity
+        + register(req: RegisterRequest, res) : ResponseEntity
+        + logout(res) : ResponseEntity
+        + getProfile(id: Long, email: String) : ResponseEntity
+        + updateProfile(id: String, req: UpdateProfileRequest) : ResponseEntity
+        + uploadAvatar(id: String, body: Map) : ResponseEntity
+        + changePassword(id: String, body: Map) : ResponseEntity
+    }
+
+    class RoomController <<RestController>> #1e293b {
+        - roomService : RoomService
+        + getRooms(type, minPrice, maxPrice, guests) : ResponseEntity
+        + getRoomByIdOrSlug(idOrSlug: String) : ResponseEntity
+        + createRoom(room: Room) : ResponseEntity
+        + updateRoom(id: Long, room: Room) : ResponseEntity
+        + deleteRoom(id: Long) : ResponseEntity
+    }
+
+    class BookingController <<RestController>> #1e293b {
+        - bookingService : BookingService
+        + createBooking(req: BookingRequest) : ResponseEntity
+        + getBookings(email: String, userId: Long) : ResponseEntity
+        + getBookingByReference(reference: String) : ResponseEntity
+        + cancelBooking(id: Long, req: CancelBookingRequest) : ResponseEntity
+        + rateBooking(id: Long, req: RateBookingRequest) : ResponseEntity
+        + updateBookingStatus(id: Long, body: Map) : ResponseEntity
+    }
+
+    class PromoController <<RestController>> #1e293b {
+        - promoCodeService : PromoCodeService
+        + validate(req: PromoValidateRequest) : ResponseEntity
+        + getAllPromos() : ResponseEntity
+        + createPromo(promoCode: PromoCode) : ResponseEntity
+        + deletePromo(id: Long) : ResponseEntity
+    }
+
+    class ReviewController <<RestController>> #1e293b {
+        - reviewService : ReviewService
+        + getReviews() : ResponseEntity
+        + createReview(req: ReviewRequest) : ResponseEntity
+        + toggleLike(id: Long, increment: Boolean) : ResponseEntity
+        + toggleHeart(id: Long, increment: Boolean) : ResponseEntity
+    }
+
+    class AdminController <<RestController>> #1e293b {
+        - userService : UserService
+        - roomService : RoomService
+        - bookingService : BookingService
+        - reviewService : ReviewService
+        + getStats() : ResponseEntity
+        + getAllUsers() : ResponseEntity
+        + getAllAdmins() : ResponseEntity
+        + createAdmin(body: Map) : ResponseEntity
+        + updateAdmin(id: Long, body: Map) : ResponseEntity
+        + deleteAdmin(id: Long) : ResponseEntity
+    }
+
+    BaseController <|-- AuthController
+    BaseController <|-- RoomController
+    BaseController <|-- BookingController
+    BaseController <|-- PromoController
+    BaseController <|-- ReviewController
+    BaseController <|-- AdminController
+
+    AuthController o-- UserService : delegates
+    RoomController o-- RoomService : delegates
+    BookingController o-- BookingService : delegates
+    PromoController o-- PromoCodeService : delegates
+    ReviewController o-- ReviewService : delegates
+    AdminController o-- UserService : delegates
+    AdminController o-- RoomService : delegates
+    AdminController o-- BookingService : delegates
+    AdminController o-- ReviewService : delegates
+}
+
+package "Data Transfer Objects (DTO Layer)" #500724 {
+    class AuthRequest <<DTO>> #1e293b {
+        - email : String
+        - password : String
+    }
+
+    class RegisterRequest <<DTO>> #1e293b {
+        - fullName : String
+        - email : String
+        - password : String
+        - phone : String
+        - city : String
+        - country : String
+    }
+
+    class UpdateProfileRequest <<DTO>> #1e293b {
+        - fullName : String
+        - email : String
+        - phone : String
+        - city : String
+        - country : String
+        - avatar : String
+        - preferredCurrency : String
+    }
+
+    class BookingRequest <<DTO>> #1e293b {
+        - roomId : String
+        - roomNumber : String
+        - userId : Long
+        - checkIn : String
+        - checkOut : String
+        - nights : Integer
+        - adults : Integer
+        - children : Integer
+        - guestInfo : GuestInfoDto
+        - paymentMethod : String
+        - subtotal : Double
+        - serviceCharge : Double
+        - taxes : Double
+        - discountAmount : Double
+        - promoCodeApplied : String
+        - totalAmount : Double
+        - currency : String
+    }
+
+    class GuestInfoDto <<DTO>> #1e293b {
+        - fullName : String
+        - email : String
+        - phone : String
+        - nicPassport : String
+        - specialRequests : String
+    }
+
+    BookingRequest *-- GuestInfoDto : owns >
+
+    AuthController ..> AuthRequest : consumes
+    AuthController ..> RegisterRequest : consumes
+    AuthController ..> UpdateProfileRequest : consumes
+    BookingController ..> BookingRequest : consumes
+}
+
+@enduml
