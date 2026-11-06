@@ -1,6 +1,6 @@
 .\mvnw spring-boot:run
 
-dataBase login : \connect yt6ep6kbryrcxm8u:wlebldixjqsbw7vp@tviw6wn55xwxejwj.cbetxkdyhwsb.us-east-1.rds.amazonaws.com:3306/hyiyfcsmqzamq5eo
+dataBase login : \connect root:xOSwZmwRKGCIVgkeWIOKaNQhaXKMxHbq@roundhouse.proxy.rlwy.net:23673/railway
 
 Official Head Administrator
 userName : admin@serenestay.com
